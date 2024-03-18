@@ -1,10 +1,210 @@
-<mxfile host="app.diagrams.net" modified="2024-03-18T21:31:24.602Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36" version="24.0.1" etag="8I3sHZFrAWJTA2gRGiQ8" type="github">
-  <diagram name="Page-1" id="V7gZmHXejr7W4XS1QPVi">
-    <mxGraphModel>
-      <root>
-        <mxCell id="0" />
-        <mxCell id="1" parent="0" />
-      </root>
-    </mxGraphModel>
-  </diagram>
-</mxfile>
+<diagram name="University Database" id="2Uedjyb0OMMd_qjxR7Ct" revision="2">
+  <mxGraphModel dx="1088" dy="606" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <root>
+      <mxCell id="0"/>
+      <mxCell id="1" parent="0"/>
+      <mxCell id="2" parent="1"/>
+      <mxCell id="3" value="User" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="100" y="80" width="120" height="60" as="geometry"/>
+      </mxCell>
+      <mxCell id="4" value="Student" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="300" y="80" width="120" height="60" as="geometry"/>
+      </mxCell>
+      <mxCell id="5" value="Professor" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="500" y="80" width="120" height="60" as="geometry"/>
+      </mxCell>
+      <mxCell id="6" value="IT Manager" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="700" y="80" width="120" height="60" as="geometry"/>
+      </mxCell>
+      <mxCell id="7" value="Educational Deputy" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="900" y="80" width="120" height="60" as="geometry"/>
+      </mxCell>
+      <mxCell id="8" value="Faculty" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="300" y="200" width="120" height="60" as="geometry"/>
+      </mxCell>
+      <mxCell id="9" value="Major" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="500" y="200" width="120" height="60" as="geometry"/>
+      </mxCell>
+      <mxCell id="10" value="Course" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="700" y="200" width="120" height="60" as="geometry"/>
+      </mxCell>
+      <mxCell id="11" value="Term" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="500" y="320" width="120" height="60" as="geometry"/>
+      </mxCell>
+      <mxCell id="12" value="User ID" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="100" y="400" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="13" value="Student ID" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="300" y="400" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="14" value="Professor ID" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="500" y="400" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="15" value="IT Manager ID" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="700" y="400" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="16" value="Educational Deputy ID" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="900" y="400" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="17" value="Name" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="100" y="460" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="18" value="Password" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="300" y="460" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="19" value="Email" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="500" y="460" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="20" value="Phone Number" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="700" y="460" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="21" value="National ID" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="900" y="460" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="22" value="Gender" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="100" y="520" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="23" value="Date of Birth" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="300" y="520" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="24" value="Year of Admission" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="500" y="520" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="25" value="GPA" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="700" y="520" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="26" value="Specialization" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="900" y="520" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="27" value="Rank" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="100" y="580" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="28" value="Military Status" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="300" y="580" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="29" value="Yearly Admission" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="500" y="580" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="30" value="Degree Level" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="700" y="580" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="31" value="Approved Courses" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="900" y="580" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="32" value="Courses in Progress" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="100" y="640" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="33" value="Advisor" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="300" y="640" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="34" value="Academic Years" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="500" y="640" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="35" value="Past Taught Courses" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="700" y="640" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="36" value="Completed Courses" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="900" y="640" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="37" value="Request Code" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="100" y="700" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="38" value="Requesting Student" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="300" y="700" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="39" value="Requested Courses" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="500" y="700" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="40" value="Course Code" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="700" y="700" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="41" value="Offering Faculty" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="900" y="700" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="42" value="Term Code" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="100" y="760" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="43" value="Course Name" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="300" y="760" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="44" value="Prerequisites" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="500" y="760" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="45" value="Corequisites" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="700" y="760" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="46" value="Number of Credits" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="900" y="760" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="47" value="Course Type" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="100" y="820" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="48" value="Course Offering" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="300" y="820" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="49" value="Day and Time of Class" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="500" y="820" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="50" value="Exam Date and Time" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="700" y="820" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="51" value="Exam Location" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="900" y="820" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="52" value="Course Capacity" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="100" y="880" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="53" value="Student Course" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="300" y="880" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="54" value="Course Status" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="500" y="880" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="55" value="Student's Grade" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="700" y="880" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="56" value="Term Taken" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="900" y="880" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="57" value="Course Registration Request" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="100" y="940" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="58" value="Course Correction Request (Add/Drop)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="300" y="940" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="59" value="Reconsideration Request" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="500" y="940" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="60" value="Emergency Withdrawal Request" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="700" y="940" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="61" value="Term Withdrawal Request" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="900" y="940" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="62" value="Deferment Request (for Males)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="100" y="1000" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="63" value="Issuing Authority" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="300" y="1000" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="64" value="Relationships" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="500" y="1000" width="120" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="65" value="Each Student belongs to one Faculty and one Major." style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="700" y="1000" width="320" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="66" value="A Student can have completed a number of Courses and be currently enrolled in others." style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="100" y="1060" width="320" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="67" value="Each Student can have one Advisor." style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="500" y="1060" width="200" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="68" value="Each Professor belongs to one Faculty and one Major." style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="700" y="1060" width="320" height="30" as="geometry"/>
+      </mxCell>
+      <mxCell id="69" value="A User can be a Student, Professor, IT Manager, or Educational Deputy." style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+        <mxGeometry x="100" y="1120" width="320" height="30" as="geometry"/>
+      </mxCell>
+    </root>
+  </mxGraphModel>
+</diagram>
