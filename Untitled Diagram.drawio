@@ -1,42 +1,108 @@
-<mxfile host="app.diagrams.net" modified="2024-03-18T23:14:37.638Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36" version="24.0.7" etag="7Wl9PaiYITAfU914x6Lu" type="github">
+<mxfile host="app.diagrams.net" modified="2024-03-19T09:57:38.102Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36" etag="Srh0uCcvKtUUv-L5Eu5S" version="24.0.7" type="github">
   <diagram id="uGB7Y_JZGm6S82u2F6Zg" name="Page-1">
-    <mxGraphModel dx="488" dy="-78" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="842" dy="156" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
         <mxCell id="2" parent="1" />
-        <mxCell id="w-Rk3A1BM_LtRzrp0sd8-69" value="User" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="w-Rk3A1BM_LtRzrp0sd8-69" value="User" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="460" y="470" width="380" height="170" as="geometry" />
         </mxCell>
-        <mxCell id="w-Rk3A1BM_LtRzrp0sd8-70" value="&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;first_name : CharField&lt;/span&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;last_name :&amp;nbsp;&lt;span style=&quot;background-color: initial;&quot;&gt;CharField&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;student/professor/user_number :&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;CharField(unique = True)&lt;/span&gt;&lt;/div&gt;&lt;div&gt;password : CharField&lt;span style=&quot;background-color: initial;&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;profile_picture : ImageField(required)&lt;/div&gt;&lt;div&gt;email : EmailField(unique = True)&lt;/div&gt;&lt;div&gt;phone_number : CharField(unique = True , max_length = 11)&lt;/div&gt;&lt;div&gt;gender : Charfield(choices{&#39;m&#39; : &#39;male&#39; , &#39;f&#39;: &#39;female&#39;})&lt;/div&gt;&lt;div&gt;birthday : DateField&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="w-Rk3A1BM_LtRzrp0sd8-69">
+        <mxCell id="w-Rk3A1BM_LtRzrp0sd8-70" value="&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;first_name : CharField&lt;/span&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;last_name :&amp;nbsp;&lt;span style=&quot;background-color: initial;&quot;&gt;CharField&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;student/professor/user_number :&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;CharField(unique = True)&lt;/span&gt;&lt;/div&gt;&lt;div&gt;password : CharField&lt;span style=&quot;background-color: initial;&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;profile_picture : ImageField(required)&lt;/div&gt;&lt;div&gt;email : EmailField(unique = True)&lt;/div&gt;&lt;div&gt;phone_number : CharField(unique = True , max_length = 11)&lt;/div&gt;&lt;div&gt;gender : Charfield(choices{&#39;m&#39; : &#39;male&#39; , &#39;f&#39;: &#39;female&#39;})&lt;/div&gt;&lt;div&gt;birthday : DateField&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" parent="w-Rk3A1BM_LtRzrp0sd8-69" vertex="1">
           <mxGeometry x="5" y="30" width="370" height="140" as="geometry" />
         </mxCell>
-        <mxCell id="w-Rk3A1BM_LtRzrp0sd8-71" value="Student" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="w-Rk3A1BM_LtRzrp0sd8-71" value="Student" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="460" y="650" width="420" height="180" as="geometry" />
         </mxCell>
-        <mxCell id="w-Rk3A1BM_LtRzrp0sd8-72" value="&lt;div&gt;entrance_year : DateField&lt;/div&gt;&lt;div&gt;entrance_semester : CharField&lt;/div&gt;&lt;div&gt;score : DecimalField&lt;span style=&quot;background-color: initial; white-space: pre;&quot;&gt;&lt;font face=&quot;Helvetica&quot; style=&quot;font-size: 12px;&quot;&gt;(max_digits=4, decimal_places=2)&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial; white-space: pre;&quot;&gt;&lt;font face=&quot;Helvetica&quot; style=&quot;font-size: 12px;&quot;&gt;faculty : CharField&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial; white-space: pre;&quot;&gt;&lt;font face=&quot;Helvetica&quot; style=&quot;font-size: 12px;&quot;&gt;field_of_study : CharField&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial; white-space: pre;&quot;&gt;&lt;font face=&quot;Helvetica&quot; style=&quot;font-size: 12px;&quot;&gt;passed_courses : CharField&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;ongoing_courses : Charfield&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;teaching_assistant : CharField&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;military_service : BooleanField ( if male required else null )&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;سنوات ؟&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+        <mxCell id="w-Rk3A1BM_LtRzrp0sd8-72" value="&lt;div&gt;entrance_year : DateField&lt;/div&gt;&lt;div&gt;entrance_semester : CharField&lt;/div&gt;&lt;div&gt;grade : DecimalField&lt;span style=&quot;background-color: initial; white-space: pre;&quot;&gt;&lt;font face=&quot;Helvetica&quot; style=&quot;font-size: 12px;&quot;&gt;(max_digits=4, decimal_places=2)&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial; white-space: pre;&quot;&gt;&lt;font face=&quot;Helvetica&quot; style=&quot;font-size: 12px;&quot;&gt;faculty : CharField&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial; white-space: pre;&quot;&gt;&lt;font face=&quot;Helvetica&quot; style=&quot;font-size: 12px;&quot;&gt;major : CharField&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial; white-space: pre;&quot;&gt;&lt;font face=&quot;Helvetica&quot; style=&quot;font-size: 12px;&quot;&gt;passed_courses : CharField&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;ongoing_courses : Charfield&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;teaching_assistant : CharField&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;military_service : BooleanField ( if male required else null )&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;سنوات ؟&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="460" y="670" width="420" height="160" as="geometry" />
         </mxCell>
-        <mxCell id="w-Rk3A1BM_LtRzrp0sd8-74" value="Professor" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="w-Rk3A1BM_LtRzrp0sd8-74" value="Professor" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="460" y="840" width="180" height="120" as="geometry" />
         </mxCell>
-        <mxCell id="w-Rk3A1BM_LtRzrp0sd8-75" value="faculty : CharField&lt;div&gt;field : Charfield&lt;/div&gt;&lt;div&gt;expertise: CharField&lt;/div&gt;&lt;div&gt;مرتبه؟ rank ?&lt;br&gt;&lt;/div&gt;&lt;div&gt;courses_taught : CharField&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="w-Rk3A1BM_LtRzrp0sd8-74">
+        <mxCell id="w-Rk3A1BM_LtRzrp0sd8-75" value="faculty : CharField&lt;div&gt;major : Charfield&lt;/div&gt;&lt;div&gt;specialization: CharField&lt;/div&gt;&lt;div&gt;rank : CharField&lt;/div&gt;&lt;div&gt;courses_taught : CharField&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" parent="w-Rk3A1BM_LtRzrp0sd8-74" vertex="1">
           <mxGeometry x="5" y="30" width="165" height="90" as="geometry" />
         </mxCell>
-        <mxCell id="w-Rk3A1BM_LtRzrp0sd8-76" value="IT Manager" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="w-Rk3A1BM_LtRzrp0sd8-76" value="IT Manager" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="650" y="840" width="150" height="90" as="geometry" />
         </mxCell>
-        <mxCell id="w-Rk3A1BM_LtRzrp0sd8-77" value="&lt;span style=&quot;font-family: Söhne, ui-sans-serif, system-ui, -apple-system, &amp;quot;Segoe UI&amp;quot;, Roboto, Ubuntu, Cantarell, &amp;quot;Noto Sans&amp;quot;, sans-serif, &amp;quot;Helvetica Neue&amp;quot;, Arial, &amp;quot;Apple Color Emoji&amp;quot;, &amp;quot;Segoe UI Emoji&amp;quot;, &amp;quot;Segoe UI Symbol&amp;quot;, &amp;quot;Noto Color Emoji&amp;quot;; font-size: 16px; font-weight: 400; text-align: start; white-space-collapse: preserve; background-color: rgb(255, 255, 255);&quot;&gt;Educational Deputy&lt;/span&gt;" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="650" y="940" width="180" height="60" as="geometry" />
+        <mxCell id="w-Rk3A1BM_LtRzrp0sd8-77" value="&lt;span style=&quot;font-family: Söhne, ui-sans-serif, system-ui, -apple-system, &amp;quot;Segoe UI&amp;quot;, Roboto, Ubuntu, Cantarell, &amp;quot;Noto Sans&amp;quot;, sans-serif, &amp;quot;Helvetica Neue&amp;quot;, Arial, &amp;quot;Apple Color Emoji&amp;quot;, &amp;quot;Segoe UI Emoji&amp;quot;, &amp;quot;Segoe UI Symbol&amp;quot;, &amp;quot;Noto Color Emoji&amp;quot;; font-size: 16px; font-weight: 400; text-align: start; white-space-collapse: preserve; background-color: rgb(255, 255, 255);&quot;&gt;Educational Deputy&lt;/span&gt;" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="650" y="940" width="160" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="w-Rk3A1BM_LtRzrp0sd8-79" value="faculty : CharField&lt;div&gt;field : CharField&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="w-Rk3A1BM_LtRzrp0sd8-77">
-          <mxGeometry x="5" y="20" width="105" height="40" as="geometry" />
+        <mxCell id="w-Rk3A1BM_LtRzrp0sd8-79" value="faculty : CharField&lt;div&gt;major : CharField&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" parent="w-Rk3A1BM_LtRzrp0sd8-77" vertex="1">
+          <mxGeometry x="5" y="20" width="155" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="w-Rk3A1BM_LtRzrp0sd8-80" value="&lt;span style=&quot;font-family: Söhne, ui-sans-serif, system-ui, -apple-system, &amp;quot;Segoe UI&amp;quot;, Roboto, Ubuntu, Cantarell, &amp;quot;Noto Sans&amp;quot;, sans-serif, &amp;quot;Helvetica Neue&amp;quot;, Arial, &amp;quot;Apple Color Emoji&amp;quot;, &amp;quot;Segoe UI Emoji&amp;quot;, &amp;quot;Segoe UI Symbol&amp;quot;, &amp;quot;Noto Color Emoji&amp;quot;; font-size: 16px; font-weight: 400; text-align: start; white-space-collapse: preserve; background-color: rgb(255, 255, 255);&quot;&gt;Approved Course&lt;/span&gt;" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="380" y="980" width="200" height="200" as="geometry" />
+        <mxCell id="w-Rk3A1BM_LtRzrp0sd8-80" value="&lt;span style=&quot;font-family: Söhne, ui-sans-serif, system-ui, -apple-system, &amp;quot;Segoe UI&amp;quot;, Roboto, Ubuntu, Cantarell, &amp;quot;Noto Sans&amp;quot;, sans-serif, &amp;quot;Helvetica Neue&amp;quot;, Arial, &amp;quot;Apple Color Emoji&amp;quot;, &amp;quot;Segoe UI Emoji&amp;quot;, &amp;quot;Segoe UI Symbol&amp;quot;, &amp;quot;Noto Color Emoji&amp;quot;; font-size: 16px; font-weight: 400; text-align: start; white-space-collapse: preserve; background-color: rgb(255, 255, 255);&quot;&gt;Approved Course&lt;/span&gt;" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="380" y="980" width="150" height="130" as="geometry" />
         </mxCell>
-        <mxCell id="w-Rk3A1BM_LtRzrp0sd8-81" value="title : CharField&lt;div&gt;faculty : CharField&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;prerequisites : CharField&lt;/span&gt;&lt;/div&gt;&lt;div&gt;corequisites : CharField&lt;/div&gt;&lt;div&gt;واحد ؟ unit ?&lt;/div&gt;&lt;div&gt;type : CharField&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="w-Rk3A1BM_LtRzrp0sd8-80">
-          <mxGeometry y="30" width="200" height="170" as="geometry" />
+        <mxCell id="w-Rk3A1BM_LtRzrp0sd8-81" value="title : CharField&lt;div&gt;faculty : CharField&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;prerequisites : CharField&lt;/span&gt;&lt;/div&gt;&lt;div&gt;corequisites : CharField&lt;/div&gt;&lt;div&gt;credit : IntegerField&lt;/div&gt;&lt;div&gt;type : CharField&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" parent="w-Rk3A1BM_LtRzrp0sd8-80" vertex="1">
+          <mxGeometry y="30" width="140" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="7urNKw9rij90OixllhiC-2" value="Semester Course" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="570" y="1040" width="160" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="7urNKw9rij90OixllhiC-3" value="schedule : DateTimeField&lt;div&gt;exam_date : DateTimeField&lt;/div&gt;&lt;div&gt;exam_hall : CharField&lt;/div&gt;&lt;div&gt;professor : CharField&lt;/div&gt;&lt;div&gt;capacity : &lt;span style=&quot;background-color: initial;&quot;&gt;IntegerField&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;semester : CharField&lt;/span&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="7urNKw9rij90OixllhiC-2">
+          <mxGeometry x="5" y="20" width="150" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="7urNKw9rij90OixllhiC-4" value="Student&#39;s Course" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="750" y="1030" width="350" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="7urNKw9rij90OixllhiC-5" value="course_status : CharField&lt;div&gt;student_grade : DecimalField(max_digits=4 , decimal_places=2)&lt;/div&gt;&lt;div&gt;semester : CharField&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="7urNKw9rij90OixllhiC-4">
+          <mxGeometry y="20" width="350" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="7urNKw9rij90OixllhiC-7" value="Semester" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="750" y="1130" width="220" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="7urNKw9rij90OixllhiC-8" value="title : CharField&lt;div&gt;people_assigned : CharField&lt;/div&gt;&lt;div&gt;courses : CharField&lt;/div&gt;&lt;div&gt;course_selection_period : DateField&lt;/div&gt;&lt;div&gt;course_period : DateField&lt;/div&gt;&lt;div&gt;grade_remediation_period : DateField&lt;br&gt;&lt;/div&gt;&lt;div&gt;emergency_withdrawal_end : DateField&lt;/div&gt;&lt;div&gt;exam_start : DateField&lt;/div&gt;&lt;div&gt;semester_end : DateField&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="7urNKw9rij90OixllhiC-7">
+          <mxGeometry y="30" width="220" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="7urNKw9rij90OixllhiC-9" value="Faculty" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="380" y="1130" width="90" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="7urNKw9rij90OixllhiC-10" value="title : CharField" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="7urNKw9rij90OixllhiC-9">
+          <mxGeometry x="5" y="20" width="85" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="7urNKw9rij90OixllhiC-11" value="Major" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="390" y="1220" width="200" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="7urNKw9rij90OixllhiC-12" value="title : CharField&lt;div&gt;department : CharField&lt;/div&gt;&lt;div&gt;faculty : CharField&lt;/div&gt;&lt;div&gt;credit : IntegerField&lt;/div&gt;&lt;div&gt;degree_level : CharField&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="7urNKw9rij90OixllhiC-11">
+          <mxGeometry y="20" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="7urNKw9rij90OixllhiC-13" value="Course Selection Request" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="650" y="1330" width="200" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="7urNKw9rij90OixllhiC-15" value="student : CharField&lt;div&gt;requested_courses : CharField&lt;/div&gt;&lt;div&gt;status : BooleanField&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="7urNKw9rij90OixllhiC-13">
+          <mxGeometry x="5" y="30" width="185" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="7urNKw9rij90OixllhiC-16" value="Grade Remediation Request" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="1350" width="200" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="7urNKw9rij90OixllhiC-17" value="student : CharField&lt;div&gt;courses_removed : CharField&lt;/div&gt;&lt;div&gt;courses_added : CharField&lt;/div&gt;&lt;div&gt;status : BooleanField&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="7urNKw9rij90OixllhiC-16">
+          <mxGeometry y="20" width="200" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="7urNKw9rij90OixllhiC-18" value="Reconsideration Request" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="870" y="1360" width="200" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="7urNKw9rij90OixllhiC-19" value="student : CharField&lt;div&gt;course : CharField&lt;/div&gt;&lt;div&gt;reconsideration_lettter : TextField&lt;/div&gt;&lt;div&gt;answer : TextField&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="7urNKw9rij90OixllhiC-18">
+          <mxGeometry y="20" width="200" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="7urNKw9rij90OixllhiC-20" value="Emergency Course Removal Request" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="380" y="1470" width="270" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="7urNKw9rij90OixllhiC-21" value="student: CharField&lt;div&gt;course : CharField&lt;/div&gt;&lt;div&gt;status : BooleanField&lt;/div&gt;&lt;div&gt;explanation_letter : TextField&lt;/div&gt;&lt;div&gt;educational_deputy_explanation_letter : TextField&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="7urNKw9rij90OixllhiC-20">
+          <mxGeometry y="20" width="270" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="7urNKw9rij90OixllhiC-22" value="Emergency Semester Removal Request" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="690" y="1520" width="270" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="7urNKw9rij90OixllhiC-23" value="student : CharField&lt;div&gt;semester : CharField&lt;/div&gt;&lt;div&gt;status : BooleanField&lt;/div&gt;&lt;div&gt;سنوات_status : BooleanField&lt;/div&gt;&lt;div&gt;&lt;div&gt;explanation_letter : TextField&lt;/div&gt;&lt;div&gt;educational_deputy_explanation_letter : TextField&lt;/div&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="7urNKw9rij90OixllhiC-22">
+          <mxGeometry y="20" width="270" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="7urNKw9rij90OixllhiC-24" value="Deferment Request (for Males)" style="swimlane;whiteSpace=wrap;html=1;startSize=23;" vertex="1" parent="1">
+          <mxGeometry x="420" y="1630" width="200" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="7urNKw9rij90OixllhiC-25" value="student : CharField&lt;div&gt;deferment_file : FileField&lt;/div&gt;&lt;div&gt;semester : CharField&lt;/div&gt;&lt;div&gt;issued_location : CharField&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="7urNKw9rij90OixllhiC-24">
+          <mxGeometry y="20" width="200" height="70" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
