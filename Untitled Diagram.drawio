@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" modified="2024-03-19T09:59:43.941Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36" etag="39Z2F4GLWBfSSJn-feEB" version="24.0.7" type="github">
+<mxfile host="app.diagrams.net" modified="2024-03-19T10:14:31.248Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36" etag="1wmLnjmPSRaY-j3k35rB" version="24.0.7" type="github">
   <diagram id="uGB7Y_JZGm6S82u2F6Zg" name="Page-1">
-    <mxGraphModel dx="814" dy="137" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1018" dy="272" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -26,7 +26,7 @@
         <mxCell id="w-Rk3A1BM_LtRzrp0sd8-76" value="IT Manager" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="650" y="840" width="150" height="90" as="geometry" />
         </mxCell>
-        <mxCell id="w-Rk3A1BM_LtRzrp0sd8-77" value="&lt;span style=&quot;font-family: Söhne, ui-sans-serif, system-ui, -apple-system, &amp;quot;Segoe UI&amp;quot;, Roboto, Ubuntu, Cantarell, &amp;quot;Noto Sans&amp;quot;, sans-serif, &amp;quot;Helvetica Neue&amp;quot;, Arial, &amp;quot;Apple Color Emoji&amp;quot;, &amp;quot;Segoe UI Emoji&amp;quot;, &amp;quot;Segoe UI Symbol&amp;quot;, &amp;quot;Noto Color Emoji&amp;quot;; font-size: 16px; font-weight: 400; text-align: start; white-space-collapse: preserve; background-color: rgb(255, 255, 255);&quot;&gt;Educational Deputy&lt;/span&gt;" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+        <mxCell id="w-Rk3A1BM_LtRzrp0sd8-77" value="&lt;span style=&quot;font-family: Söhne, ui-sans-serif, system-ui, -apple-system, &amp;quot;Segoe UI&amp;quot;, Roboto, Ubuntu, Cantarell, &amp;quot;Noto Sans&amp;quot;, sans-serif, &amp;quot;Helvetica Neue&amp;quot;, Arial, &amp;quot;Apple Color Emoji&amp;quot;, &amp;quot;Segoe UI Emoji&amp;quot;, &amp;quot;Segoe UI Symbol&amp;quot;, &amp;quot;Noto Color Emoji&amp;quot;; font-size: 16px; font-weight: 400; text-align: start; white-space-collapse: preserve; background-color: rgb(255, 255, 255);&quot;&gt;Assistant&lt;/span&gt;" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="650" y="940" width="160" height="60" as="geometry" />
         </mxCell>
         <mxCell id="w-Rk3A1BM_LtRzrp0sd8-79" value="faculty : CharField&lt;div&gt;major : CharField&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" parent="w-Rk3A1BM_LtRzrp0sd8-77" vertex="1">
@@ -89,13 +89,13 @@
         <mxCell id="7urNKw9rij90OixllhiC-20" value="Emergency Course Removal Request" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
           <mxGeometry x="380" y="1470" width="270" height="110" as="geometry" />
         </mxCell>
-        <mxCell id="7urNKw9rij90OixllhiC-21" value="student: CharField&lt;div&gt;course : CharField&lt;/div&gt;&lt;div&gt;status : BooleanField&lt;/div&gt;&lt;div&gt;explanation_letter : TextField&lt;/div&gt;&lt;div&gt;educational_deputy_explanation_letter : TextField&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="7urNKw9rij90OixllhiC-20">
+        <mxCell id="7urNKw9rij90OixllhiC-21" value="student: CharField&lt;div&gt;course : CharField&lt;/div&gt;&lt;div&gt;status : BooleanField&lt;/div&gt;&lt;div&gt;explanation_letter : TextField&lt;/div&gt;&lt;div&gt;assistant_explanation_letter : TextField&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="7urNKw9rij90OixllhiC-20">
           <mxGeometry y="20" width="270" height="90" as="geometry" />
         </mxCell>
         <mxCell id="7urNKw9rij90OixllhiC-22" value="Emergency Semester Removal Request" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
           <mxGeometry x="690" y="1520" width="270" height="120" as="geometry" />
         </mxCell>
-        <mxCell id="7urNKw9rij90OixllhiC-23" value="student : CharField&lt;div&gt;semester : CharField&lt;/div&gt;&lt;div&gt;status : BooleanField&lt;/div&gt;&lt;div&gt;سنوات_status : BooleanField&lt;/div&gt;&lt;div&gt;&lt;div&gt;explanation_letter : TextField&lt;/div&gt;&lt;div&gt;educational_deputy_explanation_letter : TextField&lt;/div&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="7urNKw9rij90OixllhiC-22">
+        <mxCell id="7urNKw9rij90OixllhiC-23" value="student : CharField&lt;div&gt;semester : CharField&lt;/div&gt;&lt;div&gt;status : BooleanField&lt;/div&gt;&lt;div&gt;سنوات_status : BooleanField&lt;/div&gt;&lt;div&gt;&lt;div&gt;explanation_letter : TextField&lt;/div&gt;&lt;div&gt;assistant_explanation_letter : TextField&lt;/div&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="7urNKw9rij90OixllhiC-22">
           <mxGeometry y="20" width="270" height="100" as="geometry" />
         </mxCell>
         <mxCell id="7urNKw9rij90OixllhiC-24" value="Deferment Request (for Males)" style="swimlane;whiteSpace=wrap;html=1;startSize=23;" vertex="1" parent="1">
