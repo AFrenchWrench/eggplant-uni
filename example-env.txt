@@ -1,0 +1,7 @@
+SECRET_KEY =
+DEBUG = True/False
+DB_NAME = eggplant-uni
+DB_USER =
+DB_PASSWORD =
+DB_HOST =
+DB_PORT =
