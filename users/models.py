@@ -1,31 +1,55 @@
+import uuid
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 
-# Create your models here.
 class User(AbstractUser):
-    user_id = models.CharField(max_length=8, primary_key=True, unique=True, editable=False)
-    type = models.CharField(max_length=1,
-                            choices=(('s', 'student'), ('i', 'it manager'), ('p', 'professor'), ('a', 'assistant')))
+    user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, max_length=8, editable=False)
+    email = models.EmailField(unique=True)
+    phone_number = models.CharField(max_length=11, unique=True)
+    national_id = models.CharField(max_length=10, unique=True)
+    gender = models.CharField(max_length=10, choices=[('M', 'Male'), ('F', 'Female')])
+    date_of_birth = models.DateField()
+    profile_picture = models.ImageField(upload_to='profile_pictures', null=True, blank=True)
+    type = models.CharField(max_length=10,
+                            choices=[('S', 'student'), ('I', 'it manager'), ('P', 'professor'), ('A', 'assistant')])
 
-    def save(self, *args, **kwargs):
-        if not self.user_id:
-            if self.type == 's':
-                id_increment = 100000
-                self.user_id = str(id_increment)
-                id_increment += 1
-            elif self.type == 'p':
-                id_increment = 200000
-                self.user_id = str(id_increment)
-                id_increment += 1
-            elif self.type == 'a':
-                id_increment = 300000
-                self.user_id = str(id_increment)
-                id_increment += 1
-            elif self.type == 'i':
-                id_increment = 400000
-                self.user_id = str(id_increment)
-                id_increment += 1
-        super().save(*args, **kwargs)
 
-    phone = models.CharField(max_length=11, unique=True)
+class Student(models.Model):
+    student_id = models.OneToOneField('User', on_delete=models.CASCADE)
+    year_of_admission = models.PositiveIntegerField()
+    admission_semester = models.CharField(max_length=20)
+    grade = models.FloatField()
+    faculty = models.ForeignKey('university.Faculty', on_delete=models.PROTECT)
+    major = models.ForeignKey('university.Major', on_delete=models.PROTECT)
+    completed_courses = models.ManyToManyField('university.ApprovedCourse', related_name='completed_by',
+                                               blank=True)
+    courses_in_progress = models.ManyToManyField('university.ApprovedCourse', related_name='in_progress_by',
+                                                 blank=True)
+    advisor = models.ForeignKey('Professor', on_delete=models.SET_NULL, null=True, blank=True)
+    military_status = models.BooleanField(default=False)
+
+
+class StudentCourse(models.Model):
+    student = models.ForeignKey('Student', on_delete=models.CASCADE)
+    course = models.ForeignKey('university.ApprovedCourse', on_delete=models.PROTECT)
+    course_status = models.CharField(max_length=20)
+    grade = models.FloatField()
+    term_taken = models.ForeignKey('university.Semester', on_delete=models.PROTECT)
+
+
+class Professor(models.Model):
+    professor_id = models.OneToOneField('User', on_delete=models.CASCADE)
+    faculty = models.ForeignKey('university.Faculty', on_delete=models.PROTECT)
+    major = models.ForeignKey('university.Major', on_delete=models.PROTECT)
+    specialization = models.CharField(max_length=100)
+    rank = models.CharField(max_length=50)
+    past_taught_courses = models.ManyToManyField('university.ApprovedCourse',
+                                                 related_name='past_taught_courses', blank=True)
+
+
+class Assistant(models.Model):
+    assistant_id = models.OneToOneField('User', on_delete=models.CASCADE)
+    faculty = models.ForeignKey('university.Faculty', on_delete=models.PROTECT)
+    major = models.ForeignKey('university.Major', on_delete=models.PROTECT)
