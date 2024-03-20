@@ -41,6 +41,9 @@ INSTALLED_APPS = [
     'users',
     'admin_dash',
     'university',
+    'student_dash',
+    'professor_dash',
+    'assistant_dash',
     # Third Parties
     'graphene_django',
 ]

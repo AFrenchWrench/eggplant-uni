@@ -29,14 +29,7 @@ class Student(models.Model):
                                                  blank=True)
     advisor = models.ForeignKey('Professor', on_delete=models.SET_NULL, null=True, blank=True)
     military_status = models.BooleanField(default=False)
-
-
-class StudentCourse(models.Model):
-    student = models.ForeignKey('Student', on_delete=models.CASCADE)
-    course = models.ForeignKey('university.ApprovedCourse', on_delete=models.PROTECT)
-    course_status = models.CharField(max_length=20)
-    grade = models.FloatField()
-    term_taken = models.ForeignKey('university.Semester', on_delete=models.PROTECT)
+    remaining_semesters = models.IntegerField()
 
 
 class Professor(models.Model):

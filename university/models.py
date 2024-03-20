@@ -15,7 +15,7 @@ class ApprovedCourse(models.Model):
                                             ('Elective', 'Elective')])
 
 
-class CourseOffering(models.Model):
+class SemesterCourse(models.Model):
     course = models.ForeignKey('ApprovedCourse', on_delete=models.PROTECT)
     academic_semester = models.ForeignKey('Semester', on_delete=models.PROTECT)
     day_and_time = models.CharField(max_length=100)
@@ -55,50 +55,4 @@ class Major(models.Model):
     degree_level = models.CharField(max_length=20)
 
 
-class CourseRegistrationRequest(models.Model):
-    request_code = models.UUIDField(primary_key=True, default=uuid.uuid4, max_length=16, editable=False)
-    requesting_student = models.ForeignKey('users.Student', on_delete=models.PROTECT)
-    requested_courses = models.ManyToManyField('ApprovedCourse', related_name='course_request', blank=True)
-    approval_status = models.CharField(max_length=20)
 
-
-class CourseCorrectionRequest(models.Model):
-    request_code = models.UUIDField(primary_key=True, default=uuid.uuid4, max_length=16, editable=False)
-    student = models.ForeignKey('users.Student', on_delete=models.PROTECT)
-    dropped_courses = models.ManyToManyField('ApprovedCourse', related_name='dropped_by')
-    added_courses = models.ManyToManyField('ApprovedCourse', related_name='added_by')
-    approval_status = models.CharField(max_length=20)
-
-
-class ReconsiderationRequest(models.Model):
-    request_code = models.UUIDField(primary_key=True, default=uuid.uuid4, max_length=16, editable=False)
-    student = models.ForeignKey('users.Student', on_delete=models.PROTECT)
-    course = models.ForeignKey('ApprovedCourse', on_delete=models.PROTECT)
-    reconsideration_text = models.TextField()
-    reconsideration_response = models.TextField()
-
-
-class EmergencyWithdrawalRequest(models.Model):
-    request_code = models.UUIDField(primary_key=True, default=uuid.uuid4, max_length=16, editable=False)
-    student = models.ForeignKey('users.Student', on_delete=models.PROTECT)
-    course = models.ForeignKey('ApprovedCourse', on_delete=models.PROTECT)
-    request_outcome = models.CharField(max_length=20)
-    student_explanation = models.TextField()
-    educational_deputy_explanation = models.TextField()
-
-
-class SemesterWithdrawalRequest(models.Model):
-    request_code = models.UUIDField(primary_key=True, default=uuid.uuid4, max_length=16, editable=False)
-    student = models.ForeignKey('users.Student', on_delete=models.PROTECT)
-    semester = models.ForeignKey('Semester', on_delete=models.PROTECT)
-    withdrawal_outcome = models.CharField(max_length=50)
-    student_explanation = models.TextField()
-    educational_deputy_explanation = models.TextField()
-
-
-class DefermentRequest(models.Model):
-    request_code = models.UUIDField(primary_key=True, default=uuid.uuid4, max_length=16, editable=False)
-    student = models.ForeignKey('users.Student', on_delete=models.PROTECT)
-    deferment_file = models.FileField(upload_to='deferment_files')
-    academic_semester = models.ForeignKey('Semester', on_delete=models.PROTECT)
-    issuing_authority = models.CharField(max_length=100)

@@ -1,3 +1,21 @@
-from django.shortcuts import render
+from django.views.generic import View
 
-# Create your views here.
+
+# POST
+class UserLoginView(View):
+    pass
+
+
+# POST
+class UserLogoutView(View):
+    pass
+
+
+# POST
+class ChangePasswordRequestView(View):
+    pass
+
+
+# POST
+class ChangePasswordActionView(View):
+    pass
