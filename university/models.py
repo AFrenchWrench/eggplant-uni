@@ -1,10 +1,10 @@
 from django.db import models
-import uuid
+
+from users.utils import generate_4_length_code
 
 
-# Create your models here.
 class ApprovedCourse(models.Model):
-    course_code = models.UUIDField(primary_key=True, default=uuid.uuid4, max_length=4, editable=False)
+    course_code = models.CharField(default=generate_4_length_code, max_length=4, editable=False, unique=True)
     course_name = models.CharField(max_length=100)
     offering_faculty = models.ForeignKey('Faculty', on_delete=models.PROTECT)
     prerequisites = models.ManyToManyField('ApprovedCourse', related_name='prerequisite_for', blank=True)
@@ -13,6 +13,11 @@ class ApprovedCourse(models.Model):
     course_type = models.CharField(max_length=20,
                                    choices=[('General', 'General'), ('Major', 'Major'), ('Foundation', 'Foundation'),
                                             ('Elective', 'Elective')])
+
+    def save(self, *args, **kwargs):
+        if not self.course_code:
+            self.course_code = generate_4_length_code()
+        super(ApprovedCourse, self).save(*args, **kwargs)
 
 
 class SemesterCourse(models.Model):
@@ -26,7 +31,7 @@ class SemesterCourse(models.Model):
 
 
 class Semester(models.Model):
-    semester_code = models.UUIDField(primary_key=True, default=uuid.uuid4, max_length=4, editable=False)
+    semester_code = models.CharField(default=generate_4_length_code, max_length=4, editable=False, unique=True)
     semester_name = models.CharField(max_length=100)
     registered_students_and_professors = models.ManyToManyField('users.User', related_name='semesters', blank=True)
     semester_courses = models.ManyToManyField('ApprovedCourse', related_name='course_semester', blank=True)
@@ -40,19 +45,31 @@ class Semester(models.Model):
     exam_start_time = models.DateTimeField()
     semester_end_date = models.DateField()
 
+    def save(self, *args, **kwargs):
+        if not self.semester_code:
+            self.semester_code = generate_4_length_code()
+        super(Semester, self).save(*args, **kwargs)
+
 
 class Faculty(models.Model):
-    faculty_code = models.UUIDField(primary_key=True, default=uuid.uuid4, max_length=4, editable=False)
+    faculty_code = models.CharField(default=generate_4_length_code, max_length=4, editable=False, unique=True)
     faculty_name = models.CharField(max_length=100, unique=True)
+
+    def save(self, *args, **kwargs):
+        if not self.faculty_code:
+            self.faculty_code = generate_4_length_code()
+        super(Faculty, self).save(*args, **kwargs)
 
 
 class Major(models.Model):
-    major_code = models.UUIDField(primary_key=True, default=uuid.uuid4, max_length=4, editable=False)
+    major_code = models.CharField(default=generate_4_length_code, max_length=4, editable=False, unique=True)
     major_name = models.CharField(max_length=100)
     department = models.CharField(max_length=100)
     faculty = models.ForeignKey('Faculty', on_delete=models.PROTECT)
     number_of_credits = models.PositiveIntegerField()
     degree_level = models.CharField(max_length=20)
 
-
-
+    def save(self, *args, **kwargs):
+        if not self.major_code:
+            self.major_code = generate_4_length_code()
+        super(Major, self).save(*args, **kwargs)

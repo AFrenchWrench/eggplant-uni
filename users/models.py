@@ -1,23 +1,21 @@
-import uuid
-
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from users.utils import generate_student_id, generate_assistant_id, generate_professor_id
+
 
 class User(AbstractUser):
-    user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, max_length=8, editable=False)
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=11, unique=True)
     national_id = models.CharField(max_length=10, unique=True)
     gender = models.CharField(max_length=10, choices=[('M', 'Male'), ('F', 'Female')])
     date_of_birth = models.DateField()
     profile_picture = models.ImageField(upload_to='profile_pictures', null=True, blank=True)
-    type = models.CharField(max_length=10,
-                            choices=[('S', 'student'), ('I', 'it manager'), ('P', 'professor'), ('A', 'assistant')])
 
 
 class Student(models.Model):
-    student_id = models.OneToOneField('User', on_delete=models.CASCADE)
+    user = models.OneToOneField('User', on_delete=models.CASCADE, related_name='student')
+    code = models.CharField(default=generate_student_id, max_length=8, editable=False, unique=True)
     year_of_admission = models.PositiveIntegerField()
     admission_semester = models.CharField(max_length=20)
     grade = models.FloatField()
@@ -33,7 +31,8 @@ class Student(models.Model):
 
 
 class Professor(models.Model):
-    professor_id = models.OneToOneField('User', on_delete=models.CASCADE)
+    user = models.OneToOneField('User', on_delete=models.CASCADE, related_name='professor')
+    code = models.CharField(default=generate_professor_id, max_length=8, editable=False, unique=True)
     faculty = models.ForeignKey('university.Faculty', on_delete=models.PROTECT)
     major = models.ForeignKey('university.Major', on_delete=models.PROTECT)
     specialization = models.CharField(max_length=100)
@@ -43,6 +42,7 @@ class Professor(models.Model):
 
 
 class Assistant(models.Model):
-    assistant_id = models.OneToOneField('User', on_delete=models.CASCADE)
+    user = models.OneToOneField('User', on_delete=models.CASCADE, related_name='assistant')
+    code = models.CharField(default=generate_assistant_id, max_length=8, editable=False, unique=True)
     faculty = models.ForeignKey('university.Faculty', on_delete=models.PROTECT)
     major = models.ForeignKey('university.Major', on_delete=models.PROTECT)
