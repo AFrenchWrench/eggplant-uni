@@ -18,9 +18,12 @@ class CourseRegistrationRequest(models.Model):
     approval_status = models.CharField(max_length=20)
 
     def save(self, *args, **kwargs):
-        if not self.request_code:
-            self.request_code = generate_code()
-        super(CourseRegistrationRequest, self).save(*args, **kwargs)
+        while True:
+            request_code = generate_code()
+            if not CourseRegistrationRequest.objects.filter(request_code=request_code).exists():
+                self.request_code = request_code
+                break
+        super().save(*args, **kwargs)
 
 
 class CourseCorrectionRequest(models.Model):
@@ -31,9 +34,12 @@ class CourseCorrectionRequest(models.Model):
     approval_status = models.CharField(max_length=20)
 
     def save(self, *args, **kwargs):
-        if not self.request_code:
-            self.request_code = generate_code()
-        super(CourseCorrectionRequest, self).save(*args, **kwargs)
+        while True:
+            request_code = generate_code()
+            if not CourseCorrectionRequest.objects.filter(request_code=request_code).exists():
+                self.request_code = request_code
+                break
+        super().save(*args, **kwargs)
 
 
 class ReconsiderationRequest(models.Model):
@@ -44,9 +50,12 @@ class ReconsiderationRequest(models.Model):
     reconsideration_response = models.TextField()
 
     def save(self, *args, **kwargs):
-        if not self.request_code:
-            self.request_code = generate_code()
-        super(ReconsiderationRequest, self).save(*args, **kwargs)
+        while True:
+            request_code = generate_code()
+            if not ReconsiderationRequest.objects.filter(request_code=request_code).exists():
+                self.request_code = request_code
+                break
+        super().save(*args, **kwargs)
 
 
 class EmergencyWithdrawalRequest(models.Model):
@@ -58,9 +67,12 @@ class EmergencyWithdrawalRequest(models.Model):
     educational_deputy_explanation = models.TextField()
 
     def save(self, *args, **kwargs):
-        if not self.request_code:
-            self.request_code = generate_code()
-        super(EmergencyWithdrawalRequest, self).save(*args, **kwargs)
+        while True:
+            request_code = generate_code()
+            if not EmergencyWithdrawalRequest.objects.filter(request_code=request_code).exists():
+                self.request_code = request_code
+                break
+        super().save(*args, **kwargs)
 
 
 class SemesterWithdrawalRequest(models.Model):
@@ -72,9 +84,12 @@ class SemesterWithdrawalRequest(models.Model):
     educational_deputy_explanation = models.TextField()
 
     def save(self, *args, **kwargs):
-        if not self.request_code:
-            self.request_code = generate_code()
-        super(SemesterWithdrawalRequest, self).save(*args, **kwargs)
+        while True:
+            request_code = generate_code()
+            if not SemesterWithdrawalRequest.objects.filter(request_code=request_code).exists():
+                self.request_code = request_code
+                break
+        super().save(*args, **kwargs)
 
 
 class DefermentRequest(models.Model):
@@ -85,6 +100,9 @@ class DefermentRequest(models.Model):
     issuing_authority = models.CharField(max_length=100)
 
     def save(self, *args, **kwargs):
-        if not self.request_code:
-            self.request_code = generate_code()
-        super(DefermentRequest, self).save(*args, **kwargs)
+        while True:
+            request_code = generate_code()
+            if not DefermentRequest.objects.filter(request_code=request_code).exists():
+                self.request_code = request_code
+                break
+        super().save(*args, **kwargs)

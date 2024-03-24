@@ -15,9 +15,12 @@ class ApprovedCourse(models.Model):
                                             ('Elective', 'Elective')])
 
     def save(self, *args, **kwargs):
-        if not self.course_code:
-            self.course_code = generate_4_length_code()
-        super(ApprovedCourse, self).save(*args, **kwargs)
+        while True:
+            course_code = generate_4_length_code()
+            if not ApprovedCourse.objects.filter(semester_code=course_code).exists():
+                self.course_code = course_code
+                break
+        super().save(*args, **kwargs)
 
 
 class SemesterCourse(models.Model):
@@ -46,19 +49,25 @@ class Semester(models.Model):
     semester_end_date = models.DateField()
 
     def save(self, *args, **kwargs):
-        if not self.semester_code:
-            self.semester_code = generate_4_length_code()
-        super(Semester, self).save(*args, **kwargs)
+        while True:
+            semester_code = generate_4_length_code()
+            if not Semester.objects.filter(semester_code=semester_code).exists():
+                self.semester_code = semester_code
+                break
+        super().save(*args, **kwargs)
 
 
 class Faculty(models.Model):
-    faculty_code = models.CharField(default=generate_4_length_code, max_length=4, editable=False, unique=True)
+    faculty_code = models.CharField(max_length=4, editable=False, unique=True)
     faculty_name = models.CharField(max_length=100, unique=True)
 
     def save(self, *args, **kwargs):
-        if not self.faculty_code:
-            self.faculty_code = generate_4_length_code()
-        super(Faculty, self).save(*args, **kwargs)
+        while True:
+            faculty_code = generate_4_length_code()
+            if not Faculty.objects.filter(faculty_code=faculty_code).exists():
+                self.faculty_code = faculty_code
+                break
+        super().save(*args, **kwargs)
 
 
 class Major(models.Model):
@@ -70,6 +79,9 @@ class Major(models.Model):
     degree_level = models.CharField(max_length=20)
 
     def save(self, *args, **kwargs):
-        if not self.major_code:
-            self.major_code = generate_4_length_code()
-        super(Major, self).save(*args, **kwargs)
+        while True:
+            major_code = generate_4_length_code()
+            if not Major.objects.filter(major_code=major_code).exists():
+                self.major_code = major_code
+                break
+        super().save(*args, **kwargs)
