@@ -30,7 +30,7 @@ class Student(models.Model):
         else:
             return True
 
-    def get_academic_semester(self):
+    def get_academic_semester_count(self):
         return self.semester_students.filter(is_active=True).count()
 
 
@@ -39,9 +39,9 @@ class Professor(models.Model):
     major = models.ForeignKey('university.Major', on_delete=models.CASCADE, related_name='professors')
     specialization = models.ManyToManyField('university.Course', related_name='professors')
     rank = models.CharField(max_length=2, choices=(
-        ('I', 'Instructor'), ('A1', 'Assistant Professor'), ('A2', 'Associate Professor'), ('P', 'Professor'),))
+        ('I', 'Instructor'), ('A1', 'Assistant Professor'), ('A2', 'Associate Professor'), ('P', 'Professor')))
 
 
 class Assistant(models.Model):
     user = models.OneToOneField('User', on_delete=models.CASCADE, related_name='assistant')
-    faculty = models.ForeignKey('university.Faculty', on_delete=models.PROTECT)
+    faculty = models.ForeignKey('university.Faculty', on_delete=models.CASCADE, related_name='assistants')

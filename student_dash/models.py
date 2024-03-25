@@ -3,9 +3,8 @@ from django.db import models
 
 class StudentCourse(models.Model):
     student = models.ForeignKey('users.Student', on_delete=models.CASCADE, related_name='courses')
-    course = models.ForeignKey('university.Course', on_delete=models.CASCADE, related_name='student_courses')
+    course = models.ForeignKey('university.SemesterCourse', on_delete=models.CASCADE, related_name='student_courses')
     grade = models.FloatField()
-    semester = models.ForeignKey('university.Semester', on_delete=models.CASCADE, related_name='student_courses')
 
     def is_passed(self):
         if self.grade >= 10:
@@ -14,7 +13,7 @@ class StudentCourse(models.Model):
             return False
 
     def course_status(self):
-        return 'In Progress' if self.semester.is_active() else 'Passed'
+        return 'In Progress' if self.course.semester.is_active() else 'Passed'
 
 
 class CourseRegistrationRequest(models.Model):
