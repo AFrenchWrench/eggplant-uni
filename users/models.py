@@ -10,7 +10,7 @@ class User(AbstractUser):
     gender = models.CharField(max_length=10, choices=[('M', 'Male'), ('F', 'Female')])
     birth_date = models.DateField(null=True, blank=True)
     image = models.ImageField(upload_to='images', null=True, blank=True)
-    user_code = models.CharField(max_length=255)
+    user_code = models.CharField(max_length=255, unique=True)
 
 
 class Student(models.Model):
@@ -37,7 +37,7 @@ class Student(models.Model):
 class Professor(models.Model):
     user = models.OneToOneField('User', on_delete=models.CASCADE, related_name='professor')
     major = models.ForeignKey('university.Major', on_delete=models.CASCADE, related_name='professors')
-    specialization = models.ManyToManyField('university.Course', related_name='professors')
+    specialization = models.CharField(max_length=50)
     rank = models.CharField(max_length=2, choices=(
         ('I', 'Instructor'), ('A1', 'Assistant Professor'), ('A2', 'Associate Professor'), ('P', 'Professor')))
 
