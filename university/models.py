@@ -1,43 +1,29 @@
 from django.db import models
+from django.utils import timezone
 
-from users.utils import generate_4_length_code
 
-
-class ApprovedCourse(models.Model):
-    course_code = models.CharField(default=generate_4_length_code, max_length=4, editable=False, unique=True)
-    course_name = models.CharField(max_length=100)
-    offering_faculty = models.ForeignKey('Faculty', on_delete=models.PROTECT)
-    prerequisites = models.ManyToManyField('ApprovedCourse', related_name='prerequisite_for', blank=True)
-    corequisites = models.ManyToManyField('ApprovedCourse', related_name='corequisite_for', blank=True)
-    number_of_credits = models.PositiveIntegerField()
-    course_type = models.CharField(max_length=20,
-                                   choices=[('General', 'General'), ('Major', 'Major'), ('Foundation', 'Foundation'),
-                                            ('Elective', 'Elective')])
-
-    def save(self, *args, **kwargs):
-        while True:
-            course_code = generate_4_length_code()
-            if not ApprovedCourse.objects.filter(semester_code=course_code).exists():
-                self.course_code = course_code
-                break
-        super().save(*args, **kwargs)
+class Course(models.Model):
+    name = models.CharField(max_length=100)
+    faculty = models.ForeignKey('Faculty', on_delete=models.CASCADE, related_name='courses')
+    prerequisites = models.ManyToManyField('Course', related_name='prerequisite_for', blank=True)
+    corequisites = models.ManyToManyField('Course', related_name='corequisite_for', blank=True)
+    units = models.PositiveIntegerField()
+    type = models.CharField(max_length=20,
+                            choices=[('G', 'General'), ('M', 'Major'), ('F', 'Foundation'), ('E', 'Elective')])
 
 
 class SemesterCourse(models.Model):
-    course = models.ForeignKey('ApprovedCourse', on_delete=models.PROTECT)
-    academic_semester = models.ForeignKey('Semester', on_delete=models.PROTECT)
+    course = models.ForeignKey('Course', on_delete=models.CASCADE, related_name='semester_courses')
+    semester = models.ForeignKey('Semester', on_delete=models.CASCADE, related_name='semester_courses')
     day_and_time = models.CharField(max_length=100)
-    exam_date_and_time = models.DateTimeField()
+    exam_datetime = models.DateTimeField()
     exam_location = models.CharField(max_length=100)
-    professor = models.ForeignKey('users.Professor', on_delete=models.PROTECT)
-    course_capacity = models.PositiveIntegerField()
+    professor = models.ForeignKey('users.Professor', on_delete=models.CASCADE, related_name='semester_courses')
+    capacity = models.PositiveIntegerField()
 
 
 class Semester(models.Model):
-    semester_code = models.CharField(default=generate_4_length_code, max_length=4, editable=False, unique=True)
-    semester_name = models.CharField(max_length=100)
-    registered_students_and_professors = models.ManyToManyField('users.User', related_name='semesters', blank=True)
-    semester_courses = models.ManyToManyField('ApprovedCourse', related_name='course_semester', blank=True)
+    name = models.CharField(max_length=100)
     course_selection_start_time = models.DateTimeField()
     course_selection_end_time = models.DateTimeField()
     class_start_time = models.DateTimeField()
@@ -48,40 +34,26 @@ class Semester(models.Model):
     exam_start_time = models.DateTimeField()
     semester_end_date = models.DateField()
 
-    def save(self, *args, **kwargs):
-        while True:
-            semester_code = generate_4_length_code()
-            if not Semester.objects.filter(semester_code=semester_code).exists():
-                self.semester_code = semester_code
-                break
-        super().save(*args, **kwargs)
+    def is_active(self):
+        return True if self.semester_end_date >= timezone.now() else False
+
+
+class SemesterStudent(models.Model):
+    student = models.ForeignKey('users.Student', on_delete=models.CASCADE, related_name='semester_students')
+    semester = models.ForeignKey('university.Semester', on_delete=models.CASCADE, related_name='semester_students')
+    is_active = models.BooleanField(default=True)
 
 
 class Faculty(models.Model):
-    faculty_code = models.CharField(max_length=4, editable=False, unique=True)
     faculty_name = models.CharField(max_length=100, unique=True)
-
-    def save(self, *args, **kwargs):
-        while True:
-            faculty_code = generate_4_length_code()
-            if not Faculty.objects.filter(faculty_code=faculty_code).exists():
-                self.faculty_code = faculty_code
-                break
-        super().save(*args, **kwargs)
 
 
 class Major(models.Model):
-    major_code = models.CharField(default=generate_4_length_code, max_length=4, editable=False, unique=True)
-    major_name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100)
     department = models.CharField(max_length=100)
-    faculty = models.ForeignKey('Faculty', on_delete=models.PROTECT)
-    number_of_credits = models.PositiveIntegerField()
-    degree_level = models.CharField(max_length=20)
-
-    def save(self, *args, **kwargs):
-        while True:
-            major_code = generate_4_length_code()
-            if not Major.objects.filter(major_code=major_code).exists():
-                self.major_code = major_code
-                break
-        super().save(*args, **kwargs)
+    faculty = models.ForeignKey('Faculty', on_delete=models.CASCADE, related_name='majors')
+    units = models.PositiveIntegerField()
+    degree_level = models.CharField(max_length=20, choices=(
+        ('AD', "Associate's Degree"), ('BD', "Bachelor's Degree"), ('MD', "Master's Degree"),
+        ('D', "Doctorate or Ph.D."),
+        ('PD', "Professional Degrees")))
