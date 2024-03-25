@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from student_dash.models import StudentCourse
-from university.models import Faculty, Major, ApprovedCourse
+from university.models import Faculty, Major, Course, Semester
 from users.models import User, Student, Professor
 
 
@@ -23,24 +23,33 @@ class StudentTests(TestCase):
                                          email='email1@email.email',
                                          phone_number='15234', national_id='3132221658',
                                          first_name='first', last_name='last', gender='male')
-        self.faculty = Faculty.objects.create(faculty_name='Faculty', faculty_code='12345')
-        self.major = Major.objects.create(major_code='12345', major_name='Major', department='Department',
-                                          faculty=self.faculty, number_of_credits=4, degree_level='asasda')
+        self.faculty = Faculty.objects.create(name='Faculty')
+        self.major = Major.objects.create(name='Major', department='Department',
+                                          faculty=self.faculty, units=4, degree_level='AD')
         self.professor = Professor.objects.create(user=self.user1, major=self.major, rank='I')
+        self.semester = Semester.objects.create(name='Spring 1403', course_selection_start_time=timezone.now(),
+                                                course_selection_end_time=timezone.now(),
+                                                class_start_time=timezone.now(),
+                                                class_end_time=timezone.now(),
+                                                course_addition_drop_start=timezone.now(),
+                                                course_addition_drop_end=timezone.now(),
+                                                last_day_for_emergency_withdrawal=timezone.now(),
+                                                exam_start_time=timezone.now(),
+                                                semester_end_date=timezone.now())
         self.student = Student.objects.create(user=self.user,
                                               admission_year=1403,
-                                              admission_semester='spring 403', major=self.major,
+                                              admission_semester=self.semester, major=self.major,
                                               advisor=self.professor, military_status=True)
-        self.course = ApprovedCourse.objects.create(course_code='adsdasd', course_name='sadad',
-                                                    offering_faculty=self.faculty,
-                                                    number_of_credits=4, course_type='General')
-        self.course1 = ApprovedCourse.objects.create(course_code='adsdaasdassd', course_name='sadsdadasdad',
-                                                     offering_faculty=self.faculty,
-                                                     number_of_credits=4, course_type='General')
-        self.stucourse1 = StudentCourse.objects.create(student=self.student, course=self.course, course_status='sdasd',
-                                                       grade=16, semester='spring 403')
-        self.stucourse2 = StudentCourse.objects.create(student=self.student, course=self.course1, course_status='sdasd',
-                                                       grade=12, semester='spring 403')
+        self.course = Course.objects.create(name='sadad',
+                                            faculty=self.faculty,
+                                            units=4, type='G')
+        self.course1 = Course.objects.create(name='sadsdadasdad',
+                                             faculty=self.faculty,
+                                             units=4, type='G')
+        self.stu_course1 = StudentCourse.objects.create(student=self.student, course=self.course,
+                                                        grade=16, semester=self.semester)
+        self.stu_course2 = StudentCourse.objects.create(student=self.student, course=self.course1,
+                                                        grade=12, semester=self.semester)
 
     def test_get_gpa_method(self):
         self.assertEqual(self.student.get_gpa(), 14.0)

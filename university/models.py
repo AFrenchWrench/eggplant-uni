@@ -45,7 +45,7 @@ class SemesterStudent(models.Model):
 
 
 class Faculty(models.Model):
-    faculty_name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100, unique=True)
 
 
 class Major(models.Model):
