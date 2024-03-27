@@ -1,108 +1,78 @@
 from django.db import models
 
-from users.utils import generate_code
-
 
 class StudentCourse(models.Model):
-    student = models.ForeignKey('users.Student', on_delete=models.CASCADE)
-    course = models.ForeignKey('university.ApprovedCourse', on_delete=models.PROTECT)
-    course_status = models.CharField(max_length=20)
+    student = models.ForeignKey('users.Student', on_delete=models.CASCADE, related_name='courses', null=True)
+    course = models.ForeignKey('university.SemesterCourse', on_delete=models.CASCADE, related_name='student_courses', null=True)
     grade = models.FloatField()
-    term_taken = models.ForeignKey('university.Semester', on_delete=models.PROTECT)
+
+    def is_passed(self):
+        if self.grade >= 10:
+            return True
+        else:
+            return False
+
+    def course_status(self):
+        return 'In Progress' if self.course.semester.is_active() else 'Passed'
 
 
-class CourseRegistrationRequest(models.Model):
-    request_code = models.CharField(default=generate_code, max_length=10, editable=False, unique=True)
-    requesting_student = models.ForeignKey('users.Student', on_delete=models.PROTECT)
-    requested_courses = models.ManyToManyField('university.ApprovedCourse', related_name='course_request', blank=True)
-    approval_status = models.CharField(max_length=20)
+class AbstractBaseRequest(models.Model):
+    student = models.ForeignKey('users.Student', on_delete=models.CASCADE, related_name='%(app_label)s_%(class)s_related', null=True)
 
-    def save(self, *args, **kwargs):
-        while True:
-            request_code = generate_code()
-            if not CourseRegistrationRequest.objects.filter(request_code=request_code).exists():
-                self.request_code = request_code
-                break
-        super().save(*args, **kwargs)
+    class Meta:
+        abstract = True
 
 
-class CourseCorrectionRequest(models.Model):
-    request_code = models.CharField(default=generate_code, max_length=10, editable=False, unique=True)
-    student = models.ForeignKey('users.Student', on_delete=models.PROTECT)
-    dropped_courses = models.ManyToManyField('university.ApprovedCourse', related_name='dropped_by')
-    added_courses = models.ManyToManyField('university.ApprovedCourse', related_name='added_by')
-    approval_status = models.CharField(max_length=20)
+class AbstractRequest(AbstractBaseRequest):
+    status = models.CharField(max_length=1, choices=(('A', 'Accepted'), ('R', 'Rejected'), ('I', 'In Progress'),), null=True)
 
-    def save(self, *args, **kwargs):
-        while True:
-            request_code = generate_code()
-            if not CourseCorrectionRequest.objects.filter(request_code=request_code).exists():
-                self.request_code = request_code
-                break
-        super().save(*args, **kwargs)
+    class Meta:
+        abstract = True
 
 
-class ReconsiderationRequest(models.Model):
-    request_code = models.CharField(default=generate_code, max_length=10, editable=False, unique=True)
-    student = models.ForeignKey('users.Student', on_delete=models.PROTECT)
-    course = models.ForeignKey('university.ApprovedCourse', on_delete=models.PROTECT)
-    reconsideration_text = models.TextField()
-    reconsideration_response = models.TextField()
-
-    def save(self, *args, **kwargs):
-        while True:
-            request_code = generate_code()
-            if not ReconsiderationRequest.objects.filter(request_code=request_code).exists():
-                self.request_code = request_code
-                break
-        super().save(*args, **kwargs)
+class CourseRegistrationRequest(AbstractRequest):
+    courses = models.ManyToManyField('university.SemesterCourse', related_name='registration_requests',
+                                     through='StudentCourseParticipant')
 
 
-class EmergencyWithdrawalRequest(models.Model):
-    request_code = models.CharField(default=generate_code, max_length=10, editable=False, unique=True)
-    student = models.ForeignKey('users.Student', on_delete=models.PROTECT)
-    course = models.ForeignKey('university.ApprovedCourse', on_delete=models.PROTECT)
-    request_outcome = models.CharField(max_length=20)
-    student_explanation = models.TextField()
-    educational_deputy_explanation = models.TextField()
-
-    def save(self, *args, **kwargs):
-        while True:
-            request_code = generate_code()
-            if not EmergencyWithdrawalRequest.objects.filter(request_code=request_code).exists():
-                self.request_code = request_code
-                break
-        super().save(*args, **kwargs)
+class StudentCourseParticipant(models.Model):
+    student = models.ForeignKey('CourseRegistrationRequest', on_delete=models.CASCADE,
+                                related_name='student_semester_course')
+    semester_course = models.ForeignKey('university.SemesterCourse', on_delete=models.CASCADE,
+                                        related_name='student_semester_course')
+    status = models.CharField(max_length=1, choices=(('R', 'Registered'), ('A', 'Added'), ('D', 'Dropped'),))
 
 
-class SemesterWithdrawalRequest(models.Model):
-    request_code = models.CharField(default=generate_code, max_length=10, editable=False, unique=True)
-    student = models.ForeignKey('users.Student', on_delete=models.PROTECT)
-    semester = models.ForeignKey('university.Semester', on_delete=models.PROTECT)
-    withdrawal_outcome = models.CharField(max_length=50)
-    student_explanation = models.TextField()
-    educational_deputy_explanation = models.TextField()
-
-    def save(self, *args, **kwargs):
-        while True:
-            request_code = generate_code()
-            if not SemesterWithdrawalRequest.objects.filter(request_code=request_code).exists():
-                self.request_code = request_code
-                break
-        super().save(*args, **kwargs)
+class CourseCorrectionRequest(AbstractRequest):
+    dropped_courses = models.ManyToManyField('university.SemesterCourse', related_name='correction_drop_requests')
+    added_courses = models.ManyToManyField('university.SemesterCourse', related_name='correction_add_requests')
 
 
-class DefermentRequest(models.Model):
-    request_code = models.CharField(default=generate_code, max_length=10, editable=False, unique=True)
-    student = models.ForeignKey('users.Student', on_delete=models.PROTECT)
-    deferment_file = models.FileField(upload_to='deferment_files')
-    academic_semester = models.ForeignKey('university.Semester', on_delete=models.PROTECT)
-    issuing_authority = models.CharField(max_length=100)
+class ReconsiderationRequest(AbstractRequest):
+    course = models.ForeignKey('university.SemesterCourse', on_delete=models.CASCADE,
+                               related_name='reconsideration_requests', null=True)
+    text = models.TextField()
+    response = models.TextField()
 
-    def save(self, *args, **kwargs):
-        while True:
-            request_code = generate_code()
-            if not DefermentRequest.objects.filter(request_code=request_code).exists():
-                self.request_code = request_code
-                break
-        super().save(*args, **kwargs)
+
+class EmergencyWithdrawalRequest(AbstractRequest):
+    course = models.ForeignKey('university.SemesterCourse', on_delete=models.CASCADE,
+                               related_name='emergency_withdrawal_requests', null=True)
+    text = models.TextField()
+    response = models.TextField()
+
+
+class SemesterWithdrawalRequest(AbstractRequest):
+    semester = models.ForeignKey('university.Semester', on_delete=models.CASCADE,
+                                 related_name='semester_withdrawal_requests', null=True)
+    text = models.TextField()
+    response = models.TextField()
+    count_semester = models.BooleanField(default=False)
+
+
+class DefermentRequest(AbstractBaseRequest):
+    file = models.FileField(upload_to='deferment_files')
+    semester = models.ForeignKey('university.Semester', on_delete=models.CASCADE,
+                                 related_name='deferment_requests', null=True)
+    faculty = models.ForeignKey('university.Faculty', on_delete=models.CASCADE,
+                                related_name='deferment_requests', null=True)
