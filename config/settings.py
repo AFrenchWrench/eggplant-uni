@@ -28,6 +28,8 @@ INSTALLED_APPS = [
     'assistant_dash',
     # Third Parties
     'graphene_django',
+    'graphql_jwt.refresh_token.apps.RefreshTokenConfig',
+    'graphql_auth',
 ]
 
 MIDDLEWARE = [
@@ -95,9 +97,20 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 X_FRAME_OPTIONS = "SAMEORIGIN"
 SILENCED_SYSTEM_CHECKS = ["security.W019"]
-AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend', ]
 
 AUTH_USER_MODEL = 'users.User'
 
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
+
+GRAPHENE = {
+    'SCHEMA': 'users.schema.schema',
+    'MIDDLEWARE': [
+        'graph_ql_jwt.middleware.JSONWebTokenMiddleware'
+    ]
+}
+
+AUTHENTICATION_BACKENDS = [
+    'graphql_auth.backends.GraphQLAuthBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
