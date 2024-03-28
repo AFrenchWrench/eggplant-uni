@@ -1,30 +1,18 @@
 from django.db import models
 
 
-class StudentCourse(models.Model):
-    student = models.ForeignKey('users.Student', on_delete=models.CASCADE, related_name='courses', null=True)
-    course = models.ForeignKey('university.SemesterCourse', on_delete=models.CASCADE, related_name='student_courses', null=True)
-    grade = models.FloatField()
-
-    def is_passed(self):
-        if self.grade >= 10:
-            return True
-        else:
-            return False
-
-    def course_status(self):
-        return 'In Progress' if self.course.semester.is_active() else 'Passed'
-
-
+# Create your models here.
 class AbstractBaseRequest(models.Model):
-    student = models.ForeignKey('users.Student', on_delete=models.CASCADE, related_name='%(app_label)s_%(class)s_related', null=True)
+    student = models.ForeignKey('users.Student', on_delete=models.CASCADE,
+                                related_name='%(app_label)s_%(class)s_related', null=True)
 
     class Meta:
         abstract = True
 
 
 class AbstractRequest(AbstractBaseRequest):
-    status = models.CharField(max_length=1, choices=(('A', 'Accepted'), ('R', 'Rejected'), ('I', 'In Progress'),), null=True)
+    status = models.CharField(max_length=1, choices=(('A', 'Accepted'), ('R', 'Rejected'), ('I', 'In Progress'),),
+                              null=True)
 
     class Meta:
         abstract = True

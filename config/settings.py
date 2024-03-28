@@ -13,6 +13,9 @@ DEBUG = os.environ.get('DEBUG')
 ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
+    # Third Parties
+    'graphene_django',
+    # Default Apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -23,13 +26,7 @@ INSTALLED_APPS = [
     'users',
     'admin_dash',
     'university',
-    'student_dash',
-    'professor_dash',
-    'assistant_dash',
-    # Third Parties
-    'graphene_django',
-    'graphql_jwt.refresh_token.apps.RefreshTokenConfig',
-    'graphql_auth',
+    'requests',
 ]
 
 MIDDLEWARE = [
@@ -103,14 +100,6 @@ AUTH_USER_MODEL = 'users.User'
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 
-GRAPHENE = {
-    'SCHEMA': 'users.schema.schema',
-    'MIDDLEWARE': [
-        'graph_ql_jwt.middleware.JSONWebTokenMiddleware'
-    ]
-}
-
 AUTHENTICATION_BACKENDS = [
-    'graphql_auth.backends.GraphQLAuthBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
