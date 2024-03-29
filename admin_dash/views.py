@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.views.generic import View
 
 
-# Filters : first and last name, student_id, national_id, faculty, major, year_of_admission, military_status
+# Filters : first and last name, user_code, national_id, faculty, major, admission_year, military_status
 # POST and GET
 class StudentListView(View):
     pass
@@ -16,7 +16,7 @@ class StudentDetailView(View):
     pass
 
 
-# Filters : first and last name, professor_id, national_id, faculty, major, rank
+# Filters : first and last name, user_code, national_id, faculty, major, rank
 # POST and GET
 class ProfessorListView(View):
     pass
@@ -27,7 +27,7 @@ class ProfessorDetailView(View):
     pass
 
 
-# Filters : first and last name, assistant_id, national_id, faculty, major
+# Filters : first and last name, user_code, national_id, faculty, major
 # POST and GET
 class AssistantListView(View):
     def post(self, request, *args, **kwargs):

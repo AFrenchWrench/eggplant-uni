@@ -1,5 +1,6 @@
+from datetime import date
+
 from django.db import models
-from django.utils import timezone
 
 
 class Course(models.Model):
@@ -51,7 +52,7 @@ class Semester(models.Model):
     semester_end_date = models.DateField()
 
     def is_active(self):
-        return True if self.semester_end_date >= timezone.now() else False
+        return True if self.semester_end_date >= date.today() else False
 
 
 class SemesterStudent(models.Model):

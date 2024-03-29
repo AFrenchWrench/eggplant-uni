@@ -1,4 +1,6 @@
 import graphene
+from django.core.exceptions import ObjectDoesNotExist
+from django.shortcuts import get_object_or_404
 from graphene_django import DjangoObjectType
 from django.contrib.auth import get_user_model, logout, login, authenticate
 from graphql import GraphQLError
@@ -97,44 +99,51 @@ class CreateUser(graphene.Mutation):
     assistant = graphene.Field(AssistantType)
 
     @staticmethod
-    def mutate(root, info, base_user_input=None, student_input=None, professor_input=None, assistant_input=None):
-        user = User.objects.create_user(**base_user_input)
-        if student_input:
-            try:
-                admission_semester = Semester.objects.get(id=student_input['admission_semester'])
-                major = Major.objects.get(id=student_input['major'])
-                advisor = Professor.objects.get(id=student_input['advisor'])
-            except Semester.DoesNotExist:
-                raise GraphQLError("Semester Does Not exist")
-            except Major.DoesNotExist:
-                raise GraphQLError("Major Does Not exist")
-            except Professor.DoesNotExist:
-                raise GraphQLError("Professor Does Not exist")
+    def mutate(root, info, base_user_input, student_input=None, professor_input=None, assistant_input=None):
 
-            student = Student.objects.create(user=user, admission_year=student_input['admission_year'],
-                                             admission_semester=admission_semester, major=major,
-                                             advisor=advisor, military_status=student_input['military_status'])
+        # Create the associated models if provided
+        if student_input:
+            student = CreateUser._create_student(base_user_input, student_input)
             return CreateUser(student=student)
         elif professor_input:
-            try:
-                major = Major.objects.get(id=professor_input['major'])
-            except Major.DoesNotExist:
-                raise GraphQLError("Major Does Not exist")
-
-            professor = Professor.objects.create(user=user, major=major,
-                                                 specialization=professor_input['specialization'],
-                                                 rank=professor_input['rank'])
+            professor = CreateUser._create_professor(base_user_input, professor_input)
             return CreateUser(professor=professor)
         elif assistant_input:
-            try:
-                faculty = Faculty.objects.get(id=assistant_input['faculty'])
-            except Faculty.DoesNotExist:
-                raise GraphQLError("Faculty Does Not exist")
-
-            assistant = Assistant.objects.create(user=user, faculty=faculty)
+            assistant = CreateUser._create_assistant(base_user_input, assistant_input)
             return CreateUser(assistant=assistant)
-        else:
-            return CreateUser(user=user)
+
+        # Create the user
+        user = User.objects.create_user(**base_user_input)
+
+        # Return the created objects
+        return CreateUser(user=user)
+
+    @staticmethod
+    def _create_student(base_user_input, student_input):
+        student_input['admission_semester'] = get_object_or_404(Semester, id=student_input['admission_semester'])
+        student_input['major'] = get_object_or_404(Major, id=student_input['major'])
+        try:
+            if student_input['advisor']:
+                student_input['advisor'] = get_object_or_404(Professor, id=student_input.get('advisor'))
+        except KeyError:
+            student_input['advisor'] = None
+        user = User.objects.create_user(**base_user_input)
+
+        return Student.objects.create(user=user, **student_input)
+
+    @staticmethod
+    def _create_professor(base_user_input, professor_input):
+        professor_input['major'] = get_object_or_404(Major, id=professor_input['major'])
+        user = User.objects.create_user(**base_user_input)
+
+        return Professor.objects.create(user=user, **professor_input)
+
+    @staticmethod
+    def _create_assistant(base_user_input, assistant_input):
+        assistant_input['faculty'] = get_object_or_404(Faculty, id=assistant_input['faculty'])
+        user = User.objects.create_user(**base_user_input)
+
+        return Assistant.objects.create(user=user, **assistant_input)
 
 
 class UpdateUserInput(graphene.InputObjectType):
@@ -149,40 +158,101 @@ class UpdateUserInput(graphene.InputObjectType):
     user_code = graphene.String()
 
 
+class UpdateStudentInput(graphene.InputObjectType):
+    admission_year = graphene.Int()
+    admission_semester = graphene.Int()
+    major = graphene.Int()
+    advisor = graphene.Int()
+    military_status = graphene.Boolean()
+
+
+class UpdateProfessorInput(graphene.InputObjectType):
+    major = graphene.Int()
+    specialization = graphene.String()
+    rank = graphene.String()
+
+
+class UpdateAssistantInput(graphene.InputObjectType):
+    faculty = graphene.Int()
+
+
 class UpdateUser(graphene.Mutation):
     class Arguments:
-        id = graphene.ID(required=True)
-        input = UpdateUserInput(required=True)
+        pk = graphene.ID(required=True)
+        base_user_input = UpdateUserInput(required=True)
+        student_input = UpdateStudentInput()
+        professor_input = UpdateProfessorInput()
+        assistant_input = UpdateAssistantInput()
 
     user = graphene.Field(UserType)
+    student = graphene.Field(StudentType)
+    professor = graphene.Field(ProfessorType)
+    assistant = graphene.Field(AssistantType)
 
     @staticmethod
-    def mutate(root, info, id, input=None):
-        user = User.objects.get(id=id)
-        if user:
-            for field, value in input.items():
-                setattr(user, field, value)
-            user.save()
-            return UpdateUser(user=user)
-        else:
-            return None
+    def mutate(root, info, pk, base_user_input, student_input=None, professor_input=None, assistant_input=None):
+        # Update the base user information
+        user = get_object_or_404(User, id=pk)
+        for field, value in base_user_input.items():
+            setattr(user, field, value)
+
+        # Update associated models if provided
+        if student_input:
+            UpdateUser._update_student(user, student_input)
+        elif professor_input:
+            UpdateUser._update_professor(user, professor_input)
+        elif assistant_input:
+            UpdateUser._update_assistant(user, assistant_input)
+
+        user.save()
+        # Return the updated objects
+        return UpdateUser(user=user)
+
+    @staticmethod
+    def _update_student(user, student_input):
+        student = get_object_or_404(Student, user=user)
+        for field, value in student_input.items():
+            if field == 'major' and value is not None:
+                value = get_object_or_404(Major, id=value)
+            elif field == 'advisor' and value is not None:
+                value = get_object_or_404(Professor, id=value)
+            setattr(student, field, value)
+        student.save()
+        return student
+
+    @staticmethod
+    def _update_professor(user, professor_input):
+        professor = get_object_or_404(Professor, user=user)
+        for field, value in professor_input.items():
+            if field == 'major' and value is not None:
+                value = get_object_or_404(Major, id=value)
+            setattr(professor, field, value)
+        professor.save()
+        return professor
+
+    @staticmethod
+    def _update_assistant(user, assistant_input):
+        assistant = get_object_or_404(Assistant, user=user)
+        for field, value in assistant_input.items():
+            if field == 'faculty' and value is not None:
+                value = get_object_or_404(Faculty, id=value)
+            setattr(assistant, field, value)
+        assistant.save()
+        return assistant
 
 
 class DeleteUser(graphene.Mutation):
     class Arguments:
-        id = graphene.ID(required=True)
+        pk = graphene.ID(required=True)
 
-    user_id = graphene.ID()
+    stat = graphene.Boolean()
 
     @staticmethod
-    def mutate(root, info, id):
-        try:
-            user = User.objects.get(pk=id)
-            user_id = user.id
-            user.delete()
-            return DeleteUser(user_id=user_id)
-        except User.DoesNotExist:
-            return DeleteUser(user_id=None)
+    def mutate(root, info, pk):
+        user = get_object_or_404(User, id=pk)
+        user.delete()
+        stat = True
+        return DeleteUser(stat=stat)
 
 
 class Login(graphene.Mutation):
@@ -216,18 +286,124 @@ class Mutation(graphene.ObjectType):
     logout = Logout.Field()
 
 
+class StudentFilterInput(graphene.InputObjectType):
+    first_name = graphene.String()
+    last_name = graphene.String()
+    user_code = graphene.String()
+    national_id = graphene.String()
+    faculty = graphene.Int()
+    major = graphene.Int()
+    admission_year = graphene.Int()
+    military_status = graphene.Boolean()
+
+
+class ProfessorFilterInput(graphene.InputObjectType):
+    first_name = graphene.String()
+    last_name = graphene.String()
+    user_code = graphene.String()
+    national_id = graphene.String()
+    faculty = graphene.Int()
+    major = graphene.Int()
+    rank = graphene.String()
+
+
+class AssistantFilterInput(graphene.InputObjectType):
+    first_name = graphene.String()
+    last_name = graphene.String()
+    user_code = graphene.String()
+    national_id = graphene.String()
+    faculty = graphene.Int()
+    major = graphene.Int()
+
+
 class Query(graphene.ObjectType):
-    users = graphene.List(UserType)
+    student = graphene.Field(StudentType, id=graphene.ID(required=True))
+    professor = graphene.Field(ProfessorType, id=graphene.ID(required=True))
+    assistant = graphene.Field(AssistantType, id=graphene.ID(required=True))
+
+    students = graphene.List(StudentType, filters=StudentFilterInput())
+    professors = graphene.List(ProfessorType, filters=ProfessorFilterInput())
+    assistants = graphene.List(AssistantType, filters=AssistantFilterInput())
+
     current_user = graphene.Field(UserType)
+
+    def resolve_student(self, info, id):
+        return get_object_or_404(Student, id=id)
+
+    def resolve_professor(self, info, id):
+        return get_object_or_404(Professor, id=id)
+
+    def resolve_assistant(self, info, id):
+        return get_object_or_404(Assistant, id=id)
+
+    def resolve_students(self, info, filters=None):
+        queryset = Student.objects.all()
+
+        if filters:
+            if filters.first_name:
+                queryset = queryset.filter(user__first_name__icontains=filters.first_name)
+            if filters.last_name:
+                queryset = queryset.filter(user__last_name__icontains=filters.last_name)
+            if filters.user_code:
+                queryset = queryset.filter(user__user_code=filters.user_code)
+            if filters.national_id:
+                queryset = queryset.filter(user__national_id=filters.national_id)
+            if filters.faculty:
+                queryset = queryset.filter(faculty_id=filters.faculty)
+            if filters.major:
+                queryset = queryset.filter(major_id=filters.major)
+            if filters.admission_year:
+                queryset = queryset.filter(admission_year=filters.admission_year)
+            if filters.military_status is not None:
+                queryset = queryset.filter(military_status=filters.military_status)
+
+        return queryset
+
+    def resolve_professors(self, info, filters=None):
+        queryset = Professor.objects.all()
+
+        if filters:
+            if filters.first_name:
+                queryset = queryset.filter(user__first_name__icontains=filters.first_name)
+            if filters.last_name:
+                queryset = queryset.filter(user__last_name__icontains=filters.last_name)
+            if filters.user_code:
+                queryset = queryset.filter(user__user_code=filters.user_code)
+            if filters.national_id:
+                queryset = queryset.filter(user__national_id=filters.national_id)
+            if filters.faculty:
+                queryset = queryset.filter(faculty_id=filters.faculty)
+            if filters.major:
+                queryset = queryset.filter(major_id=filters.major)
+            if filters.rank:
+                queryset = queryset.filter(rank=filters.rank)
+
+        return queryset
+
+    def resolve_assistants(self, info, filters=None):
+        queryset = Assistant.objects.all()
+
+        if filters:
+            if filters.first_name:
+                queryset = queryset.filter(user__first_name__icontains=filters.first_name)
+            if filters.last_name:
+                queryset = queryset.filter(user__last_name__icontains=filters.last_name)
+            if filters.user_code:
+                queryset = queryset.filter(user__user_code=filters.user_code)
+            if filters.national_id:
+                queryset = queryset.filter(user__national_id=filters.national_id)
+            if filters.faculty:
+                queryset = queryset.filter(faculty_id=filters.faculty)
+            if filters.major:
+                queryset = queryset.filter(major_id=filters.major)
+
+        return queryset
 
     def resolve_current_user(self, info):
         user = info.context.user
         if user.is_anonymous:
             raise GraphQLError('User not logged in.')
         return user
-
-    def resolve_users(self, info):
-        return User.objects.all()
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
