@@ -15,6 +15,8 @@ ALLOWED_HOSTS = ['*']
 INSTALLED_APPS = [
     # Third Parties
     'graphene_django',
+    'rest_framework',
+    'rest_framework_swagger',
     # Default Apps
     'django.contrib.admin',
     'django.contrib.auth',
@@ -26,7 +28,7 @@ INSTALLED_APPS = [
     'users',
     'admin_dash',
     'university',
-    'requests',
+    'university_requests',
 ]
 
 MIDDLEWARE = [

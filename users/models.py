@@ -34,22 +34,6 @@ class Student(models.Model):
         return self.semester_students.filter(is_active=True).count()
 
 
-class StudentCourse(models.Model):
-    student = models.ForeignKey('Student', on_delete=models.CASCADE, related_name='courses', null=True)
-    course = models.ForeignKey('university.SemesterCourse', on_delete=models.CASCADE, related_name='student_courses',
-                               null=True)
-    grade = models.FloatField()
-
-    def is_passed(self):
-        if self.grade >= 10:
-            return True
-        else:
-            return False
-
-    def course_status(self):
-        return 'In Progress' if self.course.semester.is_active() else 'Passed'
-
-
 class Professor(models.Model):
     user = models.OneToOneField('User', on_delete=models.CASCADE, related_name='professor')
     major = models.ForeignKey('university.Major', on_delete=models.CASCADE, related_name='professors')

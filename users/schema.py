@@ -10,7 +10,9 @@ from users.models import (
 )
 
 from university.models import (
-    Semester, Faculty,
+    Semester,
+    Faculty,
+    Major,
 )
 
 User = get_user_model()
@@ -36,6 +38,21 @@ class AssistantType(DjangoObjectType):
         model = Assistant
 
 
+class MajorType(DjangoObjectType):
+    class Meta:
+        model = Major
+
+
+class SemesterType(DjangoObjectType):
+    class Meta:
+        model = Semester
+
+
+class FacultyType(DjangoObjectType):
+    class Meta:
+        model = Faculty
+
+
 class CreateUserInput(graphene.InputObjectType):
     username = graphene.String(required=True)
     password = graphene.String(required=True)
@@ -52,19 +69,19 @@ class CreateUserInput(graphene.InputObjectType):
 class CreateStudentInput(graphene.InputObjectType):
     admission_year = graphene.Int(required=True)
     admission_semester = graphene.Int(required=True)
-    major_id = graphene.Int(required=True)
-    advisor_id = graphene.Int(required=False)
+    major = graphene.Int(required=True)
+    advisor = graphene.Int(required=False)
     military_status = graphene.Boolean(required=True)
 
 
 class CreateProfessorInput(graphene.InputObjectType):
-    major_id = graphene.Int(required=True)
+    major = graphene.Int(required=True)
     specialization = graphene.String(required=True)
     rank = graphene.String(required=True)
 
 
 class CreateAssistantInput(graphene.InputObjectType):
-    faculty_id = graphene.Int(required=True)
+    faculty = graphene.Int(required=True)
 
 
 class CreateUser(graphene.Mutation):
@@ -83,14 +100,39 @@ class CreateUser(graphene.Mutation):
     def mutate(root, info, base_user_input=None, student_input=None, professor_input=None, assistant_input=None):
         user = User.objects.create_user(**base_user_input)
         if student_input:
-            student = Student.objects.create(user=user, **student_input)
-            return CreateUser(user=user, student=student)
+            try:
+                admission_semester = Semester.objects.get(id=student_input['admission_semester'])
+                major = Major.objects.get(id=student_input['major'])
+                advisor = Professor.objects.get(id=student_input['advisor'])
+            except Semester.DoesNotExist:
+                raise GraphQLError("Semester Does Not exist")
+            except Major.DoesNotExist:
+                raise GraphQLError("Major Does Not exist")
+            except Professor.DoesNotExist:
+                raise GraphQLError("Professor Does Not exist")
+
+            student = Student.objects.create(user=user, admission_year=student_input['admission_year'],
+                                             admission_semester=admission_semester, major=major,
+                                             advisor=advisor, military_status=student_input['military_status'])
+            return CreateUser(student=student)
         elif professor_input:
-            professor = Professor.objects.create(user=user, **professor_input)
-            return CreateUser(user=user, professor=professor)
+            try:
+                major = Major.objects.get(id=professor_input['major'])
+            except Major.DoesNotExist:
+                raise GraphQLError("Major Does Not exist")
+
+            professor = Professor.objects.create(user=user, major=major,
+                                                 specialization=professor_input['specialization'],
+                                                 rank=professor_input['rank'])
+            return CreateUser(professor=professor)
         elif assistant_input:
-            assistant = Assistant.objects.create(user=user, **assistant_input)
-            return CreateUser(user=user, assistant=assistant)
+            try:
+                faculty = Faculty.objects.get(id=assistant_input['faculty'])
+            except Faculty.DoesNotExist:
+                raise GraphQLError("Faculty Does Not exist")
+
+            assistant = Assistant.objects.create(user=user, faculty=faculty)
+            return CreateUser(assistant=assistant)
         else:
             return CreateUser(user=user)
 

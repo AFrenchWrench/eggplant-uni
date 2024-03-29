@@ -22,6 +22,22 @@ class SemesterCourse(models.Model):
     capacity = models.PositiveIntegerField()
 
 
+class StudentCourse(models.Model):
+    student = models.ForeignKey('users.Student', on_delete=models.CASCADE, related_name='courses', null=True)
+    course = models.ForeignKey('SemesterCourse', on_delete=models.CASCADE, related_name='student_courses',
+                               null=True)
+    grade = models.FloatField()
+
+    def is_passed(self):
+        if self.grade >= 10:
+            return True
+        else:
+            return False
+
+    def course_status(self):
+        return 'In Progress' if self.course.semester.is_active() else 'Passed'
+
+
 class Semester(models.Model):
     name = models.CharField(max_length=100)
     course_selection_start_time = models.DateTimeField()
