@@ -1,4 +1,8 @@
 from django.urls import path
+from django.views.decorators.csrf import csrf_exempt
+
+from users.views import CustomGraphQLView
+from .schema import schema
 from .views import (
     SemesterListView,
     SemesterDetailView,
@@ -20,5 +24,7 @@ urlpatterns = [
     # Semesters
     path('semesters/', SemesterListView.as_view(), name='semester-list'),
     path('semester/<int:pk>/', SemesterDetailView.as_view(), name='semester-detail'),
+
+    path("graphql/", csrf_exempt(CustomGraphQLView.as_view(graphiql=True, schema=schema)), name="graphql")
 
 ]

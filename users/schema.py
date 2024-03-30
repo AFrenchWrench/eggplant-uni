@@ -40,21 +40,6 @@ class AssistantType(DjangoObjectType):
         model = Assistant
 
 
-class MajorType(DjangoObjectType):
-    class Meta:
-        model = Major
-
-
-class SemesterType(DjangoObjectType):
-    class Meta:
-        model = Semester
-
-
-class FacultyType(DjangoObjectType):
-    class Meta:
-        model = Faculty
-
-
 class CreateUserInput(graphene.InputObjectType):
     username = graphene.String(required=True)
     password = graphene.String(required=True)
@@ -70,20 +55,20 @@ class CreateUserInput(graphene.InputObjectType):
 
 class CreateStudentInput(graphene.InputObjectType):
     admission_year = graphene.Int(required=True)
-    admission_semester = graphene.Int(required=True)
-    major = graphene.Int(required=True)
-    advisor = graphene.Int(required=False)
+    admission_semester = graphene.ID(required=True)
+    major = graphene.ID(required=True)
+    advisor = graphene.ID(required=False)
     military_status = graphene.Boolean(required=True)
 
 
 class CreateProfessorInput(graphene.InputObjectType):
-    major = graphene.Int(required=True)
+    major = graphene.ID(required=True)
     specialization = graphene.String(required=True)
     rank = graphene.String(required=True)
 
 
 class CreateAssistantInput(graphene.InputObjectType):
-    faculty = graphene.Int(required=True)
+    faculty = graphene.ID(required=True)
 
 
 class CreateUser(graphene.Mutation):
@@ -160,20 +145,20 @@ class UpdateUserInput(graphene.InputObjectType):
 
 class UpdateStudentInput(graphene.InputObjectType):
     admission_year = graphene.Int()
-    admission_semester = graphene.Int()
-    major = graphene.Int()
-    advisor = graphene.Int()
+    admission_semester = graphene.ID()
+    major = graphene.ID()
+    advisor = graphene.ID()
     military_status = graphene.Boolean()
 
 
 class UpdateProfessorInput(graphene.InputObjectType):
-    major = graphene.Int()
+    major = graphene.ID()
     specialization = graphene.String()
     rank = graphene.String()
 
 
 class UpdateAssistantInput(graphene.InputObjectType):
-    faculty = graphene.Int()
+    faculty = graphene.ID()
 
 
 class UpdateUser(graphene.Mutation):

@@ -1,5 +1,4 @@
 from datetime import date
-
 from django.db import models
 
 
@@ -57,7 +56,7 @@ class Semester(models.Model):
 
 class SemesterStudent(models.Model):
     student = models.ForeignKey('users.Student', on_delete=models.CASCADE, related_name='semester_students')
-    semester = models.ForeignKey('university.Semester', on_delete=models.CASCADE, related_name='semester_students')
+    semester = models.ForeignKey('Semester', on_delete=models.CASCADE, related_name='semester_students')
     is_active = models.BooleanField(default=True)
 
 
