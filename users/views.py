@@ -13,10 +13,7 @@ class CustomGraphQLView(GraphQLView):
 
     @staticmethod
     def format_error(error):
-        formatted_error = super(CustomGraphQLView, CustomGraphQLView).format_error(error)
-        if isinstance(error, GraphQLError):
-            formatted_error = {'message': str(error)}
-        return formatted_error
+        return super(CustomGraphQLView, CustomGraphQLView).format_error(error)
 
     @classmethod
     def as_view(cls, *args, **kwargs):
