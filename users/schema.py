@@ -1,21 +1,61 @@
 import graphene
-from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth import get_user_model, logout, login, authenticate
 from django.shortcuts import get_object_or_404
 from graphene_django import DjangoObjectType
-from django.contrib.auth import get_user_model, logout, login, authenticate
-from graphql import GraphQLError
-
-from users.models import (
-    Student,
-    Professor,
-    Assistant,
-)
+from graphql import GraphQLError, GraphQLResolveInfo
 
 from university.models import (
     Semester,
     Faculty,
     Major,
 )
+from users.forms import UserForm, UpdateUserForm, ProfessorForm
+from users.models import (
+    Student,
+    Professor,
+    Assistant,
+)
+
+
+def login_required():
+    def wrapper(func):
+        def ret(*args, **kwargs):
+            info = None
+            for a in args:
+                if type(a) == GraphQLResolveInfo:
+                    info = a
+            if info:
+                if info.context.user.is_authenticated:
+                    return func(*args, **kwargs)
+                else:
+                    raise GraphQLError('You Are Not Authenticate')
+            else:
+                raise GraphQLError('Server Error')
+
+        return ret
+
+    return wrapper
+
+
+def staff_required():
+    def wrapper(func):
+        def ret(*args, **kwargs):
+            info = None
+            for a in args:
+                if type(a) == GraphQLResolveInfo:
+                    info = a
+            if info:
+                if info.context.user.is_staff:
+                    return func(*args, **kwargs)
+                else:
+                    raise GraphQLError('You Are Not Authorized')
+            else:
+                raise GraphQLError('Server Error')
+
+        return ret
+
+    return wrapper
+
 
 User = get_user_model()
 
@@ -85,23 +125,36 @@ class CreateUser(graphene.Mutation):
 
     @staticmethod
     def mutate(root, info, base_user_input, student_input=None, professor_input=None, assistant_input=None):
+        form = UserForm(base_user_input)
+        if form.is_valid():
+            # Create the associated models if provided
+            if student_input:
+                student = CreateUser._create_student(base_user_input, student_input)
+                return CreateUser(student=student)
+            elif professor_input:
+                form = ProfessorForm(professor_input)
+                if form.is_valid():
+                    professor = CreateUser._create_professor(base_user_input, professor_input)
+                    return CreateUser(professor=professor)
+                else:
+                    # Handle validation errors
+                    errors = form.errors.as_data()
+                    error_messages = [error[0].messages[0] for error in errors.values()]
+                    raise GraphQLError(', '.join(error_messages))
+            elif assistant_input:
+                assistant = CreateUser._create_assistant(base_user_input, assistant_input)
+                return CreateUser(assistant=assistant)
 
-        # Create the associated models if provided
-        if student_input:
-            student = CreateUser._create_student(base_user_input, student_input)
-            return CreateUser(student=student)
-        elif professor_input:
-            professor = CreateUser._create_professor(base_user_input, professor_input)
-            return CreateUser(professor=professor)
-        elif assistant_input:
-            assistant = CreateUser._create_assistant(base_user_input, assistant_input)
-            return CreateUser(assistant=assistant)
+            # Create the user
+            user = User.objects.create_user(**base_user_input)
 
-        # Create the user
-        user = User.objects.create_user(**base_user_input)
-
-        # Return the created objects
-        return CreateUser(user=user)
+            # Return the created objects
+            return CreateUser(user=user)
+        else:
+            # Handle validation errors
+            errors = form.errors.as_data()
+            error_messages = [error[0].messages[0] for error in errors.values()]
+            raise GraphQLError(', '.join(error_messages))
 
     @staticmethod
     def _create_student(base_user_input, student_input):
@@ -164,7 +217,7 @@ class UpdateAssistantInput(graphene.InputObjectType):
 class UpdateUser(graphene.Mutation):
     class Arguments:
         pk = graphene.ID(required=True)
-        base_user_input = UpdateUserInput(required=True)
+        base_user_input = UpdateUserInput()
         student_input = UpdateStudentInput()
         professor_input = UpdateProfessorInput()
         assistant_input = UpdateAssistantInput()
@@ -175,23 +228,43 @@ class UpdateUser(graphene.Mutation):
     assistant = graphene.Field(AssistantType)
 
     @staticmethod
-    def mutate(root, info, pk, base_user_input, student_input=None, professor_input=None, assistant_input=None):
-        # Update the base user information
-        user = get_object_or_404(User, id=pk)
-        for field, value in base_user_input.items():
-            setattr(user, field, value)
+    def mutate(root, info, pk, base_user_input={}, student_input=None, professor_input=None, assistant_input=None):
+        form = UpdateUserForm(base_user_input)
+        if form.is_valid() or not base_user_input:
 
-        # Update associated models if provided
-        if student_input:
-            UpdateUser._update_student(user, student_input)
-        elif professor_input:
-            UpdateUser._update_professor(user, professor_input)
-        elif assistant_input:
-            UpdateUser._update_assistant(user, assistant_input)
+            # Update the base user information
+            user = get_object_or_404(User, id=pk)
+            for field, value in base_user_input.items():
+                setattr(user, field, value)
 
-        user.save()
-        # Return the updated objects
-        return UpdateUser(user=user)
+            # Update associated models if provided
+            if student_input:
+                student = UpdateUser._update_student(user, student_input)
+                return UpdateUser(student=student)
+            elif professor_input:
+
+                form = ProfessorForm(professor_input)
+                if form.is_valid():
+                    professor = UpdateUser._update_professor(user, professor_input)
+                    return UpdateUser(professor=professor)
+                else:
+                    # Handle validation errors
+                    errors = form.errors.as_data()
+                    error_messages = [error[0].messages[0] for error in errors.values()]
+                    raise GraphQLError(', '.join(error_messages))
+
+            elif assistant_input:
+                assistant = UpdateUser._update_assistant(user, assistant_input)
+                return UpdateUser(assistant=assistant)
+
+            user.save()
+            # Return the updated objects
+            return UpdateUser(user=user)
+        else:
+            # Handle validation errors
+            errors = form.errors.as_data()
+            error_messages = [error[0].messages[0] for error in errors.values()]
+            raise GraphQLError(', '.join(error_messages))
 
     @staticmethod
     def _update_student(user, student_input):
@@ -330,7 +403,7 @@ class Query(graphene.ObjectType):
             if filters.last_name:
                 queryset = queryset.filter(user__last_name__icontains=filters.last_name)
             if filters.user_code:
-                queryset = queryset.filter(user__user_code=filters.user_code)
+                queryset = queryset.filter(user__user_code__icontains=filters.user_code)
             if filters.national_id:
                 queryset = queryset.filter(user__national_id=filters.national_id)
             if filters.faculty:
@@ -344,6 +417,8 @@ class Query(graphene.ObjectType):
 
         return queryset
 
+    @login_required()
+    @staff_required()
     def resolve_professors(self, info, filters=None):
         queryset = Professor.objects.all()
 
@@ -353,7 +428,7 @@ class Query(graphene.ObjectType):
             if filters.last_name:
                 queryset = queryset.filter(user__last_name__icontains=filters.last_name)
             if filters.user_code:
-                queryset = queryset.filter(user__user_code=filters.user_code)
+                queryset = queryset.filter(user__user_code__icontains=filters.user_code)
             if filters.national_id:
                 queryset = queryset.filter(user__national_id=filters.national_id)
             if filters.faculty:
@@ -374,7 +449,7 @@ class Query(graphene.ObjectType):
             if filters.last_name:
                 queryset = queryset.filter(user__last_name__icontains=filters.last_name)
             if filters.user_code:
-                queryset = queryset.filter(user__user_code=filters.user_code)
+                queryset = queryset.filter(user__user_code__icontains=filters.user_code)
             if filters.national_id:
                 queryset = queryset.filter(user__national_id=filters.national_id)
             if filters.faculty:
