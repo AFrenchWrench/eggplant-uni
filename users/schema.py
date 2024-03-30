@@ -349,8 +349,8 @@ class StudentFilterInput(graphene.InputObjectType):
     last_name = graphene.String()
     user_code = graphene.String()
     national_id = graphene.String()
-    faculty = graphene.Int()
-    major = graphene.Int()
+    faculty = graphene.ID()
+    major = graphene.ID()
     admission_year = graphene.Int()
     military_status = graphene.Boolean()
 
@@ -360,8 +360,8 @@ class ProfessorFilterInput(graphene.InputObjectType):
     last_name = graphene.String()
     user_code = graphene.String()
     national_id = graphene.String()
-    faculty = graphene.Int()
-    major = graphene.Int()
+    faculty = graphene.ID()
+    major = graphene.ID()
     rank = graphene.String()
 
 
@@ -370,8 +370,8 @@ class AssistantFilterInput(graphene.InputObjectType):
     last_name = graphene.String()
     user_code = graphene.String()
     national_id = graphene.String()
-    faculty = graphene.Int()
-    major = graphene.Int()
+    faculty = graphene.ID()
+    major = graphene.ID()
 
 
 class Query(graphene.ObjectType):
