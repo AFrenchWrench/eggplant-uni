@@ -127,7 +127,6 @@ class CreateUser(graphene.Mutation):
     def mutate(root, info, base_user_input, student_input=None, professor_input=None, assistant_input=None):
         form = UserForm(base_user_input)
         if form.is_valid():
-            # Create the associated models if provided
             if student_input:
                 student = CreateUser._create_student(base_user_input, student_input)
                 return CreateUser(student=student)
@@ -137,7 +136,6 @@ class CreateUser(graphene.Mutation):
                     professor = CreateUser._create_professor(base_user_input, professor_input)
                     return CreateUser(professor=professor)
                 else:
-                    # Handle validation errors
                     errors = form.errors.as_data()
                     error_messages = [error[0].messages[0] for error in errors.values()]
                     raise GraphQLError(', '.join(error_messages))
@@ -145,13 +143,10 @@ class CreateUser(graphene.Mutation):
                 assistant = CreateUser._create_assistant(base_user_input, assistant_input)
                 return CreateUser(assistant=assistant)
 
-            # Create the user
             user = User.objects.create_user(**base_user_input)
 
-            # Return the created objects
             return CreateUser(user=user)
         else:
-            # Handle validation errors
             errors = form.errors.as_data()
             error_messages = [error[0].messages[0] for error in errors.values()]
             raise GraphQLError(', '.join(error_messages))
@@ -232,12 +227,10 @@ class UpdateUser(graphene.Mutation):
         form = UpdateUserForm(base_user_input)
         if form.is_valid() or not base_user_input:
 
-            # Update the base user information
             user = get_object_or_404(User, id=pk)
             for field, value in base_user_input.items():
                 setattr(user, field, value)
 
-            # Update associated models if provided
             if student_input:
                 student = UpdateUser._update_student(user, student_input)
                 return UpdateUser(student=student)
@@ -248,7 +241,6 @@ class UpdateUser(graphene.Mutation):
                     professor = UpdateUser._update_professor(user, professor_input)
                     return UpdateUser(professor=professor)
                 else:
-                    # Handle validation errors
                     errors = form.errors.as_data()
                     error_messages = [error[0].messages[0] for error in errors.values()]
                     raise GraphQLError(', '.join(error_messages))
@@ -258,10 +250,8 @@ class UpdateUser(graphene.Mutation):
                 return UpdateUser(assistant=assistant)
 
             user.save()
-            # Return the updated objects
             return UpdateUser(user=user)
         else:
-            # Handle validation errors
             errors = form.errors.as_data()
             error_messages = [error[0].messages[0] for error in errors.values()]
             raise GraphQLError(', '.join(error_messages))

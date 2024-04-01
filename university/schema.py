@@ -1,4 +1,5 @@
 import graphene
+from django.db import transaction
 from graphene_django import DjangoObjectType
 from django.shortcuts import get_object_or_404
 from .models import (
@@ -115,25 +116,24 @@ class CreateCourse(graphene.Mutation):
 
     @staticmethod
     def mutate(self, info, input):
-        course = input
-        course['faculty'] = get_object_or_404(Faculty, id=course['faculty'])
+        course_data = input
+        faculty_id = course_data.pop('faculty')
+        prerequisites_ids = course_data.pop('prerequisites', [])
+        corequisites_ids = course_data.pop('corequisites', [])
 
-        try:
-            i = 0
-            for prerequisite in course['prerequisites']:
-                course['prerequisites'][i] = get_object_or_404(Course, id=prerequisite)
-                i += 1
-        except KeyError:
-            course['prerequisites'] = None
-        try:
-            i = 0
-            for corequisite in course['corequisites']:
-                course['corequisites'][i] = get_object_or_404(Course, id=corequisite)
-                i += 1
-        except KeyError:
-            course['corequisites'] = None
+        faculty = get_object_or_404(Faculty, id=faculty_id)
 
-        course = Course.objects.create(**course)
+        with transaction.atomic():
+            course = Course.objects.create(faculty=faculty, **course_data)
+
+            if prerequisites_ids:
+                prerequisites = Course.objects.filter(id__in=prerequisites_ids)
+                course.prerequisites.set(prerequisites)
+
+            if corequisites_ids:
+                corequisites = Course.objects.filter(id__in=corequisites_ids)
+                course.corequisites.set(corequisites)
+
         return CreateCourse(course=course)
 
 
@@ -218,7 +218,7 @@ class CreateMajor(graphene.Mutation):
     @staticmethod
     def mutate(self, info, input):
         major = input
-        major['faculty'] = get_object_or_404(FacultyType, id=major['faculty'])
+        major['faculty'] = get_object_or_404(Faculty, id=major['faculty'])
         major = Major.objects.create(**major)
         return CreateMajor(major=major)
 
@@ -293,16 +293,13 @@ class UpdateCourse(graphene.Mutation):
             if field == 'faculty':
                 value = get_object_or_404(Faculty, id=value)
             elif field == 'prerequisites' and value is not None:
-                i = 0
-                for prerequisite in value:
-                    value[i] = get_object_or_404(Course, id=prerequisite)
-                    i += 1
+                prerequisites = Course.objects.filter(id__in=value)
+                course.prerequisites.set(prerequisites)
             elif field == 'corequisites' and value is not None:
-                i = 0
-                for corequisite in value:
-                    value[i] = get_object_or_404(Course, id=corequisite)
-                    i += 1
-            setattr(course, field, value)
+                corequisites = Course.objects.filter(id__in=value)
+                course.corequisites.set(corequisites)
+            else:
+                setattr(course, field, value)
         course.save()
         return UpdateCourse(course=course)
 
@@ -579,44 +576,61 @@ class Query(graphene.ObjectType):
     faculties = graphene.List(FacultyType, filters=FacultyFilterInput())
     majors = graphene.List(MajorType, filters=MajorFilterInput())
 
-    # Generic resolver to get all instances of a model with filters
+    course = graphene.Field(CourseType, id=graphene.ID())
+    semester_course = graphene.Field(SemesterCourseType, id=graphene.ID())
+    student_course = graphene.Field(StudentCourseType, id=graphene.ID())
+    semester = graphene.Field(SemesterType, id=graphene.ID())
+    semester_student = graphene.Field(SemesterStudentType, id=graphene.ID())
+    faculty = graphene.Field(FacultyType, id=graphene.ID())
+    major = graphene.Field(MajorType, id=graphene.ID())
+
     def resolve_model_with_filters(self, info, model_class, filter_input=None):
         queryset = model_class.objects.all()
         if filter_input:
             queryset = queryset.filter(**filter_input)
         return queryset
 
-    # Resolver for retrieving a single instance of a model by its ID
-    def resolve_model_by_id(self, info, model_class, id):
-        return get_object_or_404(model_class, id=id)
-
-    # Resolver for courses
     def resolve_courses(self, info, filters=None):
         return self.resolve_model_with_filters(info, Course, filters)
 
-    # Resolver for semester courses
     def resolve_semester_courses(self, info, filters=None):
         return self.resolve_model_with_filters(info, SemesterCourse, filters)
 
-    # Resolver for student courses
     def resolve_student_courses(self, info, filters=None):
         return self.resolve_model_with_filters(info, StudentCourse, filters)
 
-    # Resolver for semesters
     def resolve_semesters(self, info, filters=None):
         return self.resolve_model_with_filters(info, Semester, filters)
 
-    # Resolver for semester students
     def resolve_semester_students(self, info, filters=None):
         return self.resolve_model_with_filters(info, SemesterStudent, filters)
 
-    # Resolver for faculties
     def resolve_faculties(self, info, filters=None):
         return self.resolve_model_with_filters(info, Faculty, filters)
 
-    # Resolver for majors
     def resolve_majors(self, info, filters=None):
         return self.resolve_model_with_filters(info, Major, filters)
+
+    def resolve_course(self, info, id):
+        return get_object_or_404(Course, id=id)
+
+    def resolve_semester_course(self, info, id):
+        return get_object_or_404(SemesterCourse, id=id)
+
+    def resolve_student_course(self, info, id):
+        return get_object_or_404(StudentCourse, id=id)
+
+    def resolve_semester(self, info, id):
+        return get_object_or_404(Semester, id=id)
+
+    def resolve_semester_student(self, info, id):
+        return get_object_or_404(SemesterStudent, id=id)
+
+    def resolve_faculty(self, info, id):
+        return get_object_or_404(Faculty, id=id)
+
+    def resolve_major(self, info, id):
+        return get_object_or_404(Major, id=id)
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

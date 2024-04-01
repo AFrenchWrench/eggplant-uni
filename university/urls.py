@@ -1,7 +1,7 @@
 from django.urls import path
 from django.views.decorators.csrf import csrf_exempt
 
-from users.views import CustomGraphQLView
+from .views import CustomGraphQLView
 from .schema import schema
 from .views import (
     SemesterListView,

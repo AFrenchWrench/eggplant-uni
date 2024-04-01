@@ -4,7 +4,7 @@ from django.db import models
 # Create your models here.
 class AbstractBaseRequest(models.Model):
     student = models.ForeignKey('users.Student', on_delete=models.CASCADE,
-                                related_name='%(app_label)s_%(class)s_related', null=True)
+                                related_name='%(app_label)s_%(class)s_related')
 
     class Meta:
         abstract = True
@@ -12,7 +12,7 @@ class AbstractBaseRequest(models.Model):
 
 class AbstractRequest(AbstractBaseRequest):
     status = models.CharField(max_length=1, choices=(('A', 'Accepted'), ('R', 'Rejected'), ('I', 'In Progress'),),
-                              null=True)
+                              null=True, blank=True)
 
     class Meta:
         abstract = True
