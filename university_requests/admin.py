@@ -17,7 +17,7 @@ class CourseRegistrationRequestAdmin(admin.ModelAdmin):
 
 @admin.register(StudentCourseParticipant)
 class StudentCourseParticipantAdmin(admin.ModelAdmin):
-    list_display = ['id', 'student', 'semester_course', 'status']
+    list_display = ['id', 'student', 'course', 'status']
 
 
 @admin.register(CourseCorrectionRequest)

@@ -4,7 +4,7 @@ from django.db import models
 # Create your models here.
 class AbstractBaseRequest(models.Model):
     student = models.ForeignKey('users.Student', on_delete=models.CASCADE,
-                                related_name='%(app_label)s_%(class)s_related')
+                                related_name='%(app_label)s_%(class)s_related', null=True)
 
     class Meta:
         abstract = True

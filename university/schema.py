@@ -511,6 +511,7 @@ class Mutation(graphene.ObjectType):
     create_semester_student = CreateSemesterStudent.Field()
     create_faculty = CreateFaculty.Field()
     create_major = CreateMajor.Field()
+
     update_course = UpdateCourse.Field()
     update_semester_course = UpdateSemesterCourse.Field()
     update_student_course = UpdateStudentCourse.Field()
@@ -518,6 +519,7 @@ class Mutation(graphene.ObjectType):
     update_semester_student = UpdateSemesterStudent.Field()
     update_faculty = UpdateFaculty.Field()
     update_major = UpdateMajor.Field()
+
     delete_course = DeleteCourse.Field()
     delete_semester_course = DeleteSemesterCourse.Field()
     delete_student_course = DeleteStudentCourse.Field()
@@ -530,21 +532,28 @@ class Mutation(graphene.ObjectType):
 class CourseFilterInput(graphene.InputObjectType):
     name = graphene.String()
     faculty = graphene.ID()
+    prerequisites = graphene.List(graphene.ID)
+    corequisites = graphene.List(graphene.ID)
+    units = graphene.Int()
     type = graphene.String()
 
 
 class SemesterCourseFilterInput(graphene.InputObjectType):
     course = graphene.ID()
     semester = graphene.ID()
+    professor = graphene.ID()
+    capacity = graphene.Int()
 
 
 class StudentCourseFilterInput(graphene.InputObjectType):
     student = graphene.ID()
     course = graphene.ID()
+    grade = graphene.Float()
 
 
 class SemesterFilterInput(graphene.InputObjectType):
     name = graphene.String()
+    is_active = graphene.Boolean()
 
 
 class SemesterStudentFilterInput(graphene.InputObjectType):
@@ -561,6 +570,8 @@ class MajorFilterInput(graphene.InputObjectType):
     name = graphene.String()
     department = graphene.String()
     faculty = graphene.ID()
+    units = graphene.Int()
+    degree_level = graphene.String()
 
 
 class Query(graphene.ObjectType):
@@ -588,7 +599,11 @@ class Query(graphene.ObjectType):
         return queryset
 
     def resolve_courses(self, info, filters=None):
-        return self.resolve_model_with_filters(info, Course, filters)
+        queryset = self.resolve_model_with_filters(info, Course, filters)
+        if filters:
+            if filters.name:
+                queryset = queryset.filter(name__icontains=filters.name)
+        return queryset
 
     def resolve_semester_courses(self, info, filters=None):
         return self.resolve_model_with_filters(info, SemesterCourse, filters)
@@ -597,16 +612,28 @@ class Query(graphene.ObjectType):
         return self.resolve_model_with_filters(info, StudentCourse, filters)
 
     def resolve_semesters(self, info, filters=None):
-        return self.resolve_model_with_filters(info, Semester, filters)
+        queryset = self.resolve_model_with_filters(info, Semester, filters)
+        if filters:
+            if filters.name:
+                queryset = queryset.filter(name__icontains=filters.name)
+        return queryset
 
     def resolve_semester_students(self, info, filters=None):
         return self.resolve_model_with_filters(info, SemesterStudent, filters)
 
     def resolve_faculties(self, info, filters=None):
-        return self.resolve_model_with_filters(info, Faculty, filters)
+        queryset = self.resolve_model_with_filters(info, Faculty, filters)
+        if filters:
+            if filters.name:
+                queryset = queryset.filter(name__icontains=filters.name)
+        return queryset
 
     def resolve_majors(self, info, filters=None):
-        return self.resolve_model_with_filters(info, Major, filters)
+        queryset = self.resolve_model_with_filters(info, Major, filters)
+        if filters:
+            if filters.name:
+                queryset = queryset.filter(name__icontains=filters.name)
+        return queryset
 
     @staticmethod
     def resolve_course(info, pk):

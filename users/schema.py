@@ -401,14 +401,14 @@ class Query(graphene.ObjectType):
             if filters.user_code:
                 queryset = queryset.filter(user__user_code__icontains=filters.user_code)
             if filters.national_id:
-                queryset = queryset.filter(user__national_id=filters.national_id)
+                queryset = queryset.filter(user__national_id__icontains=filters.national_id)
             if filters.faculty:
                 queryset = queryset.filter(faculty_id=filters.faculty)
             if filters.major:
                 queryset = queryset.filter(major_id=filters.major)
             if filters.admission_year:
                 queryset = queryset.filter(admission_year=filters.admission_year)
-            if filters.military_status is not None:
+            if filters.military_status:
                 queryset = queryset.filter(military_status=filters.military_status)
 
         return queryset
@@ -426,7 +426,7 @@ class Query(graphene.ObjectType):
             if filters.user_code:
                 queryset = queryset.filter(user__user_code__icontains=filters.user_code)
             if filters.national_id:
-                queryset = queryset.filter(user__national_id=filters.national_id)
+                queryset = queryset.filter(user__national_id__icontains=filters.national_id)
             if filters.faculty:
                 queryset = queryset.filter(faculty_id=filters.faculty)
             if filters.major:
@@ -448,7 +448,7 @@ class Query(graphene.ObjectType):
             if filters.user_code:
                 queryset = queryset.filter(user__user_code__icontains=filters.user_code)
             if filters.national_id:
-                queryset = queryset.filter(user__national_id=filters.national_id)
+                queryset = queryset.filter(user__national_id__icontains=filters.national_id)
             if filters.faculty:
                 queryset = queryset.filter(faculty_id=filters.faculty)
             if filters.major:

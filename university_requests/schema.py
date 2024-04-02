@@ -274,7 +274,7 @@ class UpdateCourseRegistrationRequest(graphene.Mutation):
         pk = graphene.ID(required=True)
         input = UpdateCourseRegistrationRequestInput(required=True)
 
-    course_registration_request = graphene.Field(CourseRegistrationRequest)
+    course_registration_request = graphene.Field(CourseRegistrationRequestType)
 
     @staticmethod
     def mutate(root, info, pk, input):
@@ -294,7 +294,7 @@ class UpdateStudentCourseParticipant(graphene.Mutation):
         pk = graphene.ID(required=True)
         input = UpdateStudentCourseParticipantInput(required=True)
 
-    student_course_participant = graphene.Field(StudentCourseParticipant)
+    student_course_participant = graphene.Field(StudentCourseParticipantType)
 
     @staticmethod
     def mutate(root, info, pk, input):
@@ -314,7 +314,7 @@ class UpdateCourseCorrectionRequest(graphene.Mutation):
         pk = graphene.ID(required=True)
         input = UpdateCourseCorrectionRequestInput(required=True)
 
-    course_correction_request = graphene.Field(CourseCorrectionRequest)
+    course_correction_request = graphene.Field(CourseCorrectionRequestType)
 
     @staticmethod
     def mutate(root, info, pk, input):
@@ -334,7 +334,7 @@ class UpdateReconsiderationRequest(graphene.Mutation):
         pk = graphene.ID(required=True)
         input = UpdateReconsiderationRequestInput(required=True)
 
-    reconsideration_request = graphene.Field(ReconsiderationRequest)
+    reconsideration_request = graphene.Field(ReconsiderationRequestType)
 
     @staticmethod
     def mutate(root, info, pk, input):
@@ -354,7 +354,7 @@ class UpdateEmergencyWithdrawalRequest(graphene.Mutation):
         pk = graphene.ID(required=True)
         input = UpdateEmergencyWithdrawalRequestInput(required=True)
 
-    emergency_withdrawal_request = graphene.Field(EmergencyWithdrawalRequest)
+    emergency_withdrawal_request = graphene.Field(EmergencyWithdrawalRequestType)
 
     @staticmethod
     def mutate(root, info, pk, input):
@@ -374,7 +374,7 @@ class UpdateSemesterWithdrawalRequest(graphene.Mutation):
         pk = graphene.ID(required=True)
         input = UpdateSemesterWithdrawalRequestInput(required=True)
 
-    semester_withdrawal_request = graphene.Field(SemesterWithdrawalRequest)
+    semester_withdrawal_request = graphene.Field(SemesterWithdrawalRequestType)
 
     @staticmethod
     def mutate(root, info, pk, input):
@@ -394,7 +394,7 @@ class UpdateDefermentRequest(graphene.Mutation):
         pk = graphene.ID(required=True)
         input = UpdateDefermentRequestInput(required=True)
 
-    deferment_request = graphene.Field(DefermentRequest)
+    deferment_request = graphene.Field(DefermentRequestType)
 
     @staticmethod
     def mutate(root, info, pk, input):
@@ -576,19 +576,19 @@ class DefermentRequestFilterInput(graphene.InputObjectType):
 
 class Query(graphene.ObjectType):
     course_registration_requests = graphene.List(CourseRegistrationRequestType,
-                                                 filter=CourseRegistrationRequestFilterInput)
+                                                 filters=CourseRegistrationRequestFilterInput())
     student_course_participants = graphene.List(StudentCourseParticipantType,
-                                                filter=StudentCourseParticipantFilterInput)
+                                                filters=StudentCourseParticipantFilterInput())
     course_correction_requests = graphene.List(CourseCorrectionRequestType,
-                                               filter=CourseCorrectionRequestFilterInput)
+                                               filters=CourseCorrectionRequestFilterInput())
     reconsideration_requests = graphene.List(ReconsiderationRequestType,
-                                             filter=ReconsiderationRequestFilterInput)
+                                             filters=ReconsiderationRequestFilterInput())
     emergency_withdrawal_requests = graphene.List(EmergencyWithdrawalRequestType,
-                                                  filter=EmergencyWithdrawalRequestFilterInput)
+                                                  filters=EmergencyWithdrawalRequestFilterInput())
     semester_withdrawal_requests = graphene.List(SemesterWithdrawalRequestType,
-                                                 filter=SemesterWithdrawalRequestFilterInput)
+                                                 filters=SemesterWithdrawalRequestFilterInput())
     deferment_requests = graphene.List(DefermentRequestType,
-                                       filter=DefermentRequestFilterInput)
+                                       filters=DefermentRequestFilterInput())
 
     course_registration_request = graphene.Field(CourseRegistrationRequestType, pk=graphene.ID(required=True))
     student_course_participant = graphene.Field(StudentCourseParticipantType, pk=graphene.ID(required=True))
