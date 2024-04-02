@@ -15,6 +15,7 @@ ALLOWED_HOSTS = ['*']
 INSTALLED_APPS = [
     # Third Parties
     'graphene_django',
+    'graphene_file_upload',
     'rest_framework',
     'rest_framework_swagger',
     # Default Apps

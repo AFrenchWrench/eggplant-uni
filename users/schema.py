@@ -2,6 +2,7 @@ import graphene
 from django.contrib.auth import get_user_model, logout, login, authenticate
 from django.shortcuts import get_object_or_404
 from graphene_django import DjangoObjectType
+from graphene_file_upload.scalars import Upload
 from graphql import GraphQLError, GraphQLResolveInfo
 
 from university.models import (
@@ -90,6 +91,7 @@ class CreateUserInput(graphene.InputObjectType):
     national_id = graphene.String(required=True)
     gender = graphene.String(required=True)
     birth_date = graphene.Date(required=True)
+    image = Upload(required=True)
     user_code = graphene.String(required=True)
 
 
@@ -188,6 +190,7 @@ class UpdateUserInput(graphene.InputObjectType):
     national_id = graphene.String()
     gender = graphene.String()
     birth_date = graphene.Date()
+    image = Upload()
     user_code = graphene.String()
 
 
