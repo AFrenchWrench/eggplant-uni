@@ -118,20 +118,18 @@ class CreateCourse(graphene.Mutation):
     def mutate(self, info, input):
         course_data = input
         faculty_id = course_data.pop('faculty')
-        prerequisites_ids = course_data.pop('prerequisites', [])
-        corequisites_ids = course_data.pop('corequisites', [])
+        prerequisites = [get_object_or_404(Course, pk=course_id) for course_id in input['prerequisites']]
+        corequisites = [get_object_or_404(Course, pk=course_id) for course_id in input['corequisites']]
 
-        faculty = get_object_or_404(Faculty, id=faculty_id)
+        faculty = get_object_or_404(Faculty, pk=faculty_id)
 
         with transaction.atomic():
             course = Course.objects.create(faculty=faculty, **course_data)
 
-            if prerequisites_ids:
-                prerequisites = Course.objects.filter(id__in=prerequisites_ids)
+            if prerequisites:
                 course.prerequisites.set(prerequisites)
 
-            if corequisites_ids:
-                corequisites = Course.objects.filter(id__in=corequisites_ids)
+            if corequisites:
                 course.corequisites.set(corequisites)
 
         return CreateCourse(course=course)
@@ -146,9 +144,9 @@ class CreateSemesterCourse(graphene.Mutation):
     @staticmethod
     def mutate(self, info, input):
         semester_course = input
-        semester_course['course'] = get_object_or_404(Course, id=semester_course['course'])
-        semester_course['semester'] = get_object_or_404(Semester, id=semester_course['semester'])
-        semester_course['professor'] = get_object_or_404(Professor, id=semester_course['professor'])
+        semester_course['course'] = get_object_or_404(Course, pkpkpkpkpkpkpk=semester_course['course'])
+        semester_course['semester'] = get_object_or_404(Semester, pkpkpkpkpkpkpk=semester_course['semester'])
+        semester_course['professor'] = get_object_or_404(Professor, pk=semester_course['professor'])
         semester_course = SemesterCourse.objects.create(**semester_course)
         return CreateSemesterCourse(semester_course=semester_course)
 
@@ -162,8 +160,8 @@ class CreateStudentCourse(graphene.Mutation):
     @staticmethod
     def mutate(self, info, input):
         student_course = input
-        student_course['student'] = get_object_or_404(Student, id=student_course['student'])
-        student_course['course'] = get_object_or_404(SemesterCourse, id=student_course['course'])
+        student_course['student'] = get_object_or_404(Student, pkpkpkpkpkpk=student_course['student'])
+        student_course['course'] = get_object_or_404(SemesterCourse, pk=student_course['course'])
         student_course = StudentCourse.objects.create(**student_course)
         return CreateStudentCourse(student_course=student_course)
 
@@ -190,8 +188,8 @@ class CreateSemesterStudent(graphene.Mutation):
     @staticmethod
     def mutate(self, info, input):
         semester_student = input
-        semester_student['student'] = get_object_or_404(Student, id=semester_student['student'])
-        semester_student['semester'] = get_object_or_404(Semester, id=semester_student['semester'])
+        semester_student['student'] = get_object_or_404(Student, pkpkpkpkpk=semester_student['student'])
+        semester_student['semester'] = get_object_or_404(Semester, pk=semester_student['semester'])
         semester_student = SemesterStudent.objects.create(**semester_student)
         return CreateSemesterStudent(semester_student=semester_student)
 
@@ -218,7 +216,7 @@ class CreateMajor(graphene.Mutation):
     @staticmethod
     def mutate(self, info, input):
         major = input
-        major['faculty'] = get_object_or_404(Faculty, id=major['faculty'])
+        major['faculty'] = get_object_or_404(Faculty, pk=major['faculty'])
         major = Major.objects.create(**major)
         return CreateMajor(major=major)
 
@@ -291,15 +289,13 @@ class UpdateCourse(graphene.Mutation):
         course = get_object_or_404(Course, pk=pk)
         for field, value in input.items():
             if field == 'faculty':
-                value = get_object_or_404(Faculty, id=value)
+                value = get_object_or_404(Faculty, pk=value)
             elif field == 'prerequisites' and value is not None:
-                prerequisites = Course.objects.filter(id__in=value)
-                course.prerequisites.set(prerequisites)
+                value = [get_object_or_404(Course, pk=course_id) for course_id in value]
             elif field == 'corequisites' and value is not None:
-                corequisites = Course.objects.filter(id__in=value)
-                course.corequisites.set(corequisites)
-            else:
-                setattr(course, field, value)
+                value = [get_object_or_404(Course, pk=course_id) for course_id in value]
+
+            setattr(course, field, value)
         course.save()
         return UpdateCourse(course=course)
 
@@ -576,15 +572,16 @@ class Query(graphene.ObjectType):
     faculties = graphene.List(FacultyType, filters=FacultyFilterInput())
     majors = graphene.List(MajorType, filters=MajorFilterInput())
 
-    course = graphene.Field(CourseType, id=graphene.ID())
-    semester_course = graphene.Field(SemesterCourseType, id=graphene.ID())
-    student_course = graphene.Field(StudentCourseType, id=graphene.ID())
-    semester = graphene.Field(SemesterType, id=graphene.ID())
-    semester_student = graphene.Field(SemesterStudentType, id=graphene.ID())
-    faculty = graphene.Field(FacultyType, id=graphene.ID())
-    major = graphene.Field(MajorType, id=graphene.ID())
+    course = graphene.Field(CourseType, pkpk=graphene.ID())
+    semester_course = graphene.Field(SemesterCourseType, pkpk=graphene.ID())
+    student_course = graphene.Field(StudentCourseType, pkpk=graphene.ID())
+    semester = graphene.Field(SemesterType, pkpk=graphene.ID())
+    semester_student = graphene.Field(SemesterStudentType, pkpk=graphene.ID())
+    faculty = graphene.Field(FacultyType, pkpk=graphene.ID())
+    major = graphene.Field(MajorType, pk=graphene.ID())
 
-    def resolve_model_with_filters(self, info, model_class, filter_input=None):
+    @staticmethod
+    def resolve_model_with_filters(info, model_class, filter_input=None):
         queryset = model_class.objects.all()
         if filter_input:
             queryset = queryset.filter(**filter_input)
@@ -611,26 +608,33 @@ class Query(graphene.ObjectType):
     def resolve_majors(self, info, filters=None):
         return self.resolve_model_with_filters(info, Major, filters)
 
-    def resolve_course(self, info, id):
-        return get_object_or_404(Course, id=id)
+    @staticmethod
+    def resolve_course(info, pk):
+        return get_object_or_404(Course, pk=pk)
 
-    def resolve_semester_course(self, info, id):
-        return get_object_or_404(SemesterCourse, id=id)
+    @staticmethod
+    def resolve_semester_course(info, pk):
+        return get_object_or_404(SemesterCourse, pk=pk)
 
-    def resolve_student_course(self, info, id):
-        return get_object_or_404(StudentCourse, id=id)
+    @staticmethod
+    def resolve_student_course(info, pk):
+        return get_object_or_404(StudentCourse, pk=pk)
 
-    def resolve_semester(self, info, id):
-        return get_object_or_404(Semester, id=id)
+    @staticmethod
+    def resolve_semester(info, pk):
+        return get_object_or_404(Semester, pk=pk)
 
-    def resolve_semester_student(self, info, id):
-        return get_object_or_404(SemesterStudent, id=id)
+    @staticmethod
+    def resolve_semester_student(info, pk):
+        return get_object_or_404(SemesterStudent, pk=pk)
 
-    def resolve_faculty(self, info, id):
-        return get_object_or_404(Faculty, id=id)
+    @staticmethod
+    def resolve_faculty(info, pk):
+        return get_object_or_404(Faculty, pk=pk)
 
-    def resolve_major(self, info, id):
-        return get_object_or_404(Major, id=id)
+    @staticmethod
+    def resolve_major(info, pk):
+        return get_object_or_404(Major, pk=pk)
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

@@ -12,7 +12,7 @@ class AbstractBaseRequest(models.Model):
 
 class AbstractRequest(AbstractBaseRequest):
     status = models.CharField(max_length=1, choices=(('A', 'Accepted'), ('R', 'Rejected'), ('I', 'In Progress'),),
-                              null=True, blank=True)
+                              default='I')
 
     class Meta:
         abstract = True
@@ -26,9 +26,11 @@ class CourseRegistrationRequest(AbstractRequest):
 class StudentCourseParticipant(models.Model):
     student = models.ForeignKey('CourseRegistrationRequest', on_delete=models.CASCADE,
                                 related_name='student_semester_course')
-    semester_course = models.ForeignKey('university.SemesterCourse', on_delete=models.CASCADE,
-                                        related_name='student_semester_course')
-    status = models.CharField(max_length=1, choices=(('R', 'Registered'), ('A', 'Added'), ('D', 'Dropped'),))
+    course = models.ForeignKey('university.SemesterCourse', on_delete=models.CASCADE,
+                               related_name='student_semester_course')
+    status = models.CharField(max_length=1,
+                              choices=(('R', 'Registered'), ('A', 'Added'), ('D', 'Dropped'), ('I', 'In Progress'),),
+                              default='I')
 
 
 class CourseCorrectionRequest(AbstractRequest):
