@@ -2,6 +2,8 @@ import graphene
 from django.db import transaction
 from graphene_django import DjangoObjectType
 from django.shortcuts import get_object_or_404
+from graphql_jwt.decorators import login_required
+
 from .models import (
     Course,
     SemesterCourse,
@@ -598,6 +600,7 @@ class Query(graphene.ObjectType):
             queryset = queryset.filter(**filter_input)
         return queryset
 
+    @login_required
     def resolve_courses(self, info, filters=None):
         queryset = self.resolve_model_with_filters(info, Course, filters)
         if filters:

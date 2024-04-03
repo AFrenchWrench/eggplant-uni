@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -16,6 +17,7 @@ INSTALLED_APPS = [
     # Third Parties
     'graphene_django',
     'graphene_file_upload',
+    'graphql_jwt.refresh_token.apps.RefreshTokenConfig',
     'rest_framework',
     'rest_framework_swagger',
     # Default Apps
@@ -40,6 +42,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Third party middlewares
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -104,5 +108,23 @@ STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 
 AUTHENTICATION_BACKENDS = [
+    "graphql_jwt.backends.JSONWebTokenBackend",
     'django.contrib.auth.backends.ModelBackend',
 ]
+
+GRAPHENE = {
+    "SCHEMA": "config.schema.schema",
+    "MIDDLEWARE": [
+        "graphql_jwt.middleware.JSONWebTokenMiddleware",
+    ],
+}
+
+GRAPHQL_JWT = {
+    "JWT_AUTH_HEADER_PREFIX": "Bearer",
+    "JWT_VERIFY_EXPIRATION": True,
+    "JWT_LONG_RUNNING_REFRESH_TOKEN": False,
+    "JWT_ALLOW_ARGUMENT": True,
+    "JWT_EXPIRATION_DELTA": timedelta(hours=12),
+    "JWT_SECRET_KEY": SECRET_KEY,
+    "JWT_ALGORITHM": "HS256",
+}

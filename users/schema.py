@@ -1,10 +1,23 @@
 import graphene
-from django.contrib.auth import get_user_model, logout, login, authenticate
+import graphql_jwt
+from django.contrib.auth import (
+    get_user_model,
+    logout,
+    login,
+    authenticate,
+)
 from django.shortcuts import get_object_or_404
 from graphene_django import DjangoObjectType
 from graphene_file_upload.scalars import Upload
-from graphql import GraphQLError, GraphQLResolveInfo
-
+from graphql import (
+    GraphQLError,
+    GraphQLResolveInfo,
+)
+from graphql_jwt.decorators import (
+    login_required,
+    staff_member_required,
+)
+from graphql_jwt.shortcuts import get_token
 from university.models import (
     Semester,
     Faculty,
@@ -16,47 +29,6 @@ from users.models import (
     Professor,
     Assistant,
 )
-
-
-def login_required():
-    def wrapper(func):
-        def ret(*args, **kwargs):
-            info = None
-            for a in args:
-                if type(a) == GraphQLResolveInfo:
-                    info = a
-            if info:
-                if info.context.user.is_authenticated:
-                    return func(*args, **kwargs)
-                else:
-                    raise GraphQLError('You Are Not Authenticate')
-            else:
-                raise GraphQLError('Server Error')
-
-        return ret
-
-    return wrapper
-
-
-def staff_required():
-    def wrapper(func):
-        def ret(*args, **kwargs):
-            info = None
-            for a in args:
-                if type(a) == GraphQLResolveInfo:
-                    info = a
-            if info:
-                if info.context.user.is_staff:
-                    return func(*args, **kwargs)
-                else:
-                    raise GraphQLError('You Are Not Authorized')
-            else:
-                raise GraphQLError('Server Error')
-
-        return ret
-
-    return wrapper
-
 
 User = get_user_model()
 
@@ -91,7 +63,7 @@ class CreateUserInput(graphene.InputObjectType):
     national_id = graphene.String(required=True)
     gender = graphene.String(required=True)
     birth_date = graphene.Date(required=True)
-    image = Upload(required=True)
+    # image = Upload(required=True)
     user_code = graphene.String(required=True)
 
 
@@ -145,7 +117,7 @@ class CreateUser(graphene.Mutation):
                 assistant = CreateUser._create_assistant(base_user_input, assistant_input)
                 return CreateUser(assistant=assistant)
 
-            user = User.objects.create_user(**base_user_input)
+            user = User.objects.create_user(**base_user_input, is_staff=True)
 
             return CreateUser(user=user)
         else:
@@ -226,6 +198,7 @@ class UpdateUser(graphene.Mutation):
     assistant = graphene.Field(AssistantType)
 
     @staticmethod
+    @login_required
     def mutate(root, info, pk, base_user_input={}, student_input=None, professor_input=None, assistant_input=None):
         form = UpdateUserForm(base_user_input)
         if form.is_valid() or not base_user_input:
@@ -311,32 +284,30 @@ class Login(graphene.Mutation):
         username = graphene.String(required=True)
         password = graphene.String(required=True)
 
+    token = graphene.String()
     user = graphene.Field(UserType)
 
     @staticmethod
-    def mutate(info, username, password):
+    def mutate(root, info, username, password):
+        if info.context.user.is_authenticated:
+            raise GraphQLError("You are already logged in")
+
         user = authenticate(username=username, password=password)
+
         if user is None:
-            raise GraphQLError('Invalid username or password.')
-        login(info.context, user)
-        return Login(user=user)
+            raise GraphQLError('Invalid username or password')
 
-
-class Logout(graphene.Mutation):
-    success = graphene.Boolean()
-
-    @staticmethod
-    def mutate(info):
-        logout(info.context)
-        return Logout(success=True)
+        token = get_token(user)
+        return Login(token=token, user=user)
 
 
 class Mutation(graphene.ObjectType):
+    token_auth = graphql_jwt.ObtainJSONWebToken.Field()
+    verify_token = graphql_jwt.Verify.Field()
     create_user = CreateUser.Field()
     update_user = UpdateUser.Field()
     delete_user = DeleteUser.Field()
     login = Login.Field()
-    logout = Logout.Field()
 
 
 class StudentFilterInput(graphene.InputObjectType):
@@ -416,8 +387,7 @@ class Query(graphene.ObjectType):
 
         return queryset
 
-    @login_required()
-    @staff_required()
+    @staff_member_required
     def resolve_professors(self, info, filters=None):
         queryset = Professor.objects.all()
 
