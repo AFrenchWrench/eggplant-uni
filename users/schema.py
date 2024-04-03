@@ -1,9 +1,6 @@
 import graphene
-import graphql_jwt
 from django.contrib.auth import (
     get_user_model,
-    logout,
-    login,
     authenticate,
 )
 from django.shortcuts import get_object_or_404
@@ -11,10 +8,8 @@ from graphene_django import DjangoObjectType
 from graphene_file_upload.scalars import Upload
 from graphql import (
     GraphQLError,
-    GraphQLResolveInfo,
 )
 from graphql_jwt.decorators import (
-    login_required,
     staff_member_required,
 )
 from graphql_jwt.shortcuts import get_token
@@ -23,7 +18,12 @@ from university.models import (
     Faculty,
     Major,
 )
-from users.forms import UserForm, UpdateUserForm, ProfessorForm
+from users.forms import (
+    UserForm,
+    UpdateUserForm,
+    ProfessorForm,
+    UpdateProfessorForm,
+)
 from users.models import (
     Student,
     Professor,
@@ -98,6 +98,7 @@ class CreateUser(graphene.Mutation):
     assistant = graphene.Field(AssistantType)
 
     @staticmethod
+    @staff_member_required
     def mutate(root, info, base_user_input, student_input=None, professor_input=None, assistant_input=None):
         form = UserForm(base_user_input)
         if form.is_valid():
@@ -198,21 +199,22 @@ class UpdateUser(graphene.Mutation):
     assistant = graphene.Field(AssistantType)
 
     @staticmethod
-    @login_required
-    def mutate(root, info, pk, base_user_input={}, student_input=None, professor_input=None, assistant_input=None):
+    @staff_member_required
+    def mutate(root, info, pk, base_user_input=None, student_input=None, professor_input=None, assistant_input=None):
         form = UpdateUserForm(base_user_input)
-        if form.is_valid() or not base_user_input:
+        if form.is_valid() or base_user_input is None:
 
             user = get_object_or_404(User, pk=pk)
-            for field, value in base_user_input.items():
-                setattr(user, field, value)
+
+            if base_user_input is not None:
+                for field, value in base_user_input.items():
+                    setattr(user, field, value)
 
             if student_input:
                 student = UpdateUser._update_student(user, student_input)
                 return UpdateUser(student=student)
             elif professor_input:
-
-                form = ProfessorForm(professor_input)
+                form = UpdateProfessorForm(professor_input)
                 if form.is_valid():
                     professor = UpdateUser._update_professor(user, professor_input)
                     return UpdateUser(professor=professor)
@@ -227,6 +229,8 @@ class UpdateUser(graphene.Mutation):
 
             user.save()
             return UpdateUser(user=user)
+        elif [base_user_input, student_input, professor_input, assistant_input] == [None, None, None, None]:
+            raise GraphQLError('At least one input type should be filled')
         else:
             errors = form.errors.as_data()
             error_messages = [error[0].messages[0] for error in errors.values()]
@@ -272,6 +276,7 @@ class DeleteUser(graphene.Mutation):
     stat = graphene.Boolean()
 
     @staticmethod
+    @staff_member_required
     def mutate(root, info, pk):
         user = get_object_or_404(User, pk=pk)
         user.delete()
@@ -293,7 +298,6 @@ class Login(graphene.Mutation):
             raise GraphQLError("You are already logged in")
 
         user = authenticate(username=username, password=password)
-
         if user is None:
             raise GraphQLError('Invalid username or password')
 
@@ -302,8 +306,6 @@ class Login(graphene.Mutation):
 
 
 class Mutation(graphene.ObjectType):
-    token_auth = graphql_jwt.ObtainJSONWebToken.Field()
-    verify_token = graphql_jwt.Verify.Field()
     create_user = CreateUser.Field()
     update_user = UpdateUser.Field()
     delete_user = DeleteUser.Field()
@@ -364,7 +366,8 @@ class Query(graphene.ObjectType):
         return get_object_or_404(Assistant, pk=pk)
 
     @staticmethod
-    def resolve_students(info, filters=None):
+    @staff_member_required
+    def resolve_students(root, info, filters=None):
         queryset = Student.objects.all()
 
         if filters:
@@ -382,13 +385,14 @@ class Query(graphene.ObjectType):
                 queryset = queryset.filter(major_id=filters.major)
             if filters.admission_year:
                 queryset = queryset.filter(admission_year=filters.admission_year)
-            if filters.military_status:
+            if filters.military_status is not None:
                 queryset = queryset.filter(military_status=filters.military_status)
 
         return queryset
 
+    @staticmethod
     @staff_member_required
-    def resolve_professors(self, info, filters=None):
+    def resolve_professors(root, info, filters=None):
         queryset = Professor.objects.all()
 
         if filters:
@@ -410,7 +414,8 @@ class Query(graphene.ObjectType):
         return queryset
 
     @staticmethod
-    def resolve_assistants(info, filters=None):
+    @staff_member_required
+    def resolve_assistants(root, info, filters=None):
         queryset = Assistant.objects.all()
 
         if filters:

@@ -17,7 +17,6 @@ INSTALLED_APPS = [
     # Third Parties
     'graphene_django',
     'graphene_file_upload',
-    'graphql_jwt.refresh_token.apps.RefreshTokenConfig',
     'rest_framework',
     'rest_framework_swagger',
     # Default Apps
@@ -42,8 +41,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # Third party middlewares
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
 ]
 
 ROOT_URLCONF = 'config.urls'
