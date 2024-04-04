@@ -313,11 +313,23 @@ class Login(graphene.Mutation):
         return Login(token=token, user=user)
 
 
+class Logout(graphene.Mutation):
+    success = graphene.Boolean()
+
+    @staticmethod
+    @login_required
+    def mutate(root, info):
+        token = get_token(info.context)
+        token.blacklist()
+        return Logout(success=True)
+
+
 class Mutation(graphene.ObjectType):
     create_user = CreateUser.Field()
     update_user = UpdateUser.Field()
     delete_user = DeleteUser.Field()
     login = Login.Field()
+    logout = Logout.Field()
 
 
 class StudentFilterInput(graphene.InputObjectType):
