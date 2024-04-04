@@ -24,4 +24,4 @@ class ProfessorAdmin(admin.ModelAdmin):
 
 @admin.register(Assistant)
 class AssistantAdmin(admin.ModelAdmin):
-    list_display = ['user', 'faculty']
+    list_display = ['user', 'faculty', 'major']

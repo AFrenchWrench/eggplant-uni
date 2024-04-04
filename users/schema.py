@@ -3,6 +3,7 @@ from django.contrib.auth import (
     get_user_model,
     authenticate,
 )
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
 from graphene_django import DjangoObjectType
 from graphene_file_upload.scalars import Upload
@@ -11,6 +12,7 @@ from graphql import (
 )
 from graphql_jwt.decorators import (
     staff_member_required,
+    login_required,
 )
 from graphql_jwt.shortcuts import get_token
 from university.models import (
@@ -29,6 +31,7 @@ from users.models import (
     Professor,
     Assistant,
 )
+from utils.schema_utils import resolve_model_with_filters, staff_or_same_faculty_assistant, staff_or_assistant
 
 User = get_user_model()
 
@@ -83,6 +86,7 @@ class CreateProfessorInput(graphene.InputObjectType):
 
 class CreateAssistantInput(graphene.InputObjectType):
     faculty = graphene.ID(required=True)
+    major = graphene.ID(required=True)
 
 
 class CreateUser(graphene.Mutation):
@@ -149,6 +153,7 @@ class CreateUser(graphene.Mutation):
     @staticmethod
     def _create_assistant(base_user_input, assistant_input):
         assistant_input['faculty'] = get_object_or_404(Faculty, pk=assistant_input['faculty'])
+        assistant_input['major'] = get_object_or_404(Major, pk=assistant_input['major'])
         user = User.objects.create_user(**base_user_input)
 
         return Assistant.objects.create(user=user, **assistant_input)
@@ -183,6 +188,7 @@ class UpdateProfessorInput(graphene.InputObjectType):
 
 class UpdateAssistantInput(graphene.InputObjectType):
     faculty = graphene.ID()
+    major = graphene.ID()
 
 
 class UpdateUser(graphene.Mutation):
@@ -264,6 +270,8 @@ class UpdateUser(graphene.Mutation):
         for field, value in assistant_input.items():
             if field == 'faculty' and value is not None:
                 value = get_object_or_404(Faculty, pk=value)
+            if field == 'major' and value is not None:
+                value = get_object_or_404(Major, pk=value)
             setattr(assistant, field, value)
         assistant.save()
         return assistant
@@ -313,39 +321,39 @@ class Mutation(graphene.ObjectType):
 
 
 class StudentFilterInput(graphene.InputObjectType):
-    first_name = graphene.String()
-    last_name = graphene.String()
-    user_code = graphene.String()
-    national_id = graphene.String()
-    faculty = graphene.ID()
+    user__first_name__icontains = graphene.String()
+    user__last_name__icontains = graphene.String()
+    user__user_code__icontains = graphene.String()
+    user__national_id__icontains = graphene.String()
+    major__faculty = graphene.ID()
     major = graphene.ID()
     admission_year = graphene.Int()
     military_status = graphene.Boolean()
 
 
 class ProfessorFilterInput(graphene.InputObjectType):
-    first_name = graphene.String()
-    last_name = graphene.String()
-    user_code = graphene.String()
-    national_id = graphene.String()
-    faculty = graphene.ID()
+    user__first_name__icontains = graphene.String()
+    user__last_name__icontains = graphene.String()
+    user__user_code__icontains = graphene.String()
+    user__national_id__icontains = graphene.String()
+    major__faculty = graphene.ID()
     major = graphene.ID()
     rank = graphene.String()
 
 
 class AssistantFilterInput(graphene.InputObjectType):
-    first_name = graphene.String()
-    last_name = graphene.String()
-    user_code = graphene.String()
-    national_id = graphene.String()
+    user__first_name__icontains = graphene.String()
+    user__last_name__icontains = graphene.String()
+    user__user_code__icontains = graphene.String()
+    user__national_id__icontains = graphene.String()
     faculty = graphene.ID()
     major = graphene.ID()
 
 
 class Query(graphene.ObjectType):
-    student = graphene.Field(StudentType, pk=graphene.ID(required=True))
-    professor = graphene.Field(ProfessorType, pk=graphene.ID(required=True))
-    assistant = graphene.Field(AssistantType, pk=graphene.ID(required=True))
+    student = graphene.Field(StudentType, pk=graphene.ID())
+    professor = graphene.Field(ProfessorType, pk=graphene.ID())
+    assistant = graphene.Field(AssistantType, pk=graphene.ID())
 
     students = graphene.List(StudentType, filters=StudentFilterInput())
     professors = graphene.List(ProfessorType, filters=ProfessorFilterInput())
@@ -354,85 +362,84 @@ class Query(graphene.ObjectType):
     current_user = graphene.Field(UserType)
 
     @staticmethod
-    def resolve_student(info, pk):
-        return get_object_or_404(Student, pk=pk)
+    @login_required
+    def resolve_student(root, info, pk=None):
+        if staff_or_assistant(info.context.user):
+            student = get_object_or_404(Student, pk=pk)
+            try:
+                faculty = info.context.user.assistant.faculty
+                if student.major.faculty == faculty:
+                    return student
+                else:
+                    raise GraphQLError("This student is not in your faculty")
+            except ObjectDoesNotExist:
+                pass
+            return student
+        else:
+            user = info.context.user
+            try:
+                student = user.student
+            except ObjectDoesNotExist:
+                raise GraphQLError("You are not a student")
+
+            return student
 
     @staticmethod
-    def resolve_professor(info, pk):
-        return get_object_or_404(Professor, pk=pk)
+    @login_required
+    def resolve_professor(root, info, pk=None):
+        if staff_or_assistant(info.context.user):
+            professor = get_object_or_404(Professor, pk=pk)
+            try:
+                faculty = info.context.user.assistant.faculty
+                if professor.major.faculty == faculty:
+                    return professor
+                else:
+                    raise GraphQLError("This professor is not in your faculty")
+            except ObjectDoesNotExist:
+                pass
+            return professor
+        else:
+            user = info.context.user
+            try:
+                professor = user.professor
+            except ObjectDoesNotExist:
+                raise GraphQLError("You are not a professor")
+
+            return professor
 
     @staticmethod
-    def resolve_assistant(info, pk):
+    @staff_member_required
+    def resolve_assistant(root, info, pk):
         return get_object_or_404(Assistant, pk=pk)
 
     @staticmethod
-    @staff_member_required
+    @login_required
     def resolve_students(root, info, filters=None):
-        queryset = Student.objects.all()
-
-        if filters:
-            if filters.first_name:
-                queryset = queryset.filter(user__first_name__icontains=filters.first_name)
-            if filters.last_name:
-                queryset = queryset.filter(user__last_name__icontains=filters.last_name)
-            if filters.user_code:
-                queryset = queryset.filter(user__user_code__icontains=filters.user_code)
-            if filters.national_id:
-                queryset = queryset.filter(user__national_id__icontains=filters.national_id)
-            if filters.faculty:
-                queryset = queryset.filter(faculty_id=filters.faculty)
-            if filters.major:
-                queryset = queryset.filter(major_id=filters.major)
-            if filters.admission_year:
-                queryset = queryset.filter(admission_year=filters.admission_year)
-            if filters.military_status is not None:
-                queryset = queryset.filter(military_status=filters.military_status)
-
-        return queryset
+        if staff_or_assistant(info.context.user):
+            try:
+                if filters is None:
+                    filters = {}
+                filters['major__faculty'] = info.context.user.assistant.faculty.id
+            except ObjectDoesNotExist:
+                pass
+            return resolve_model_with_filters(Student, filters)
 
     @staticmethod
-    @staff_member_required
+    @login_required
     def resolve_professors(root, info, filters=None):
-        queryset = Professor.objects.all()
-
-        if filters:
-            if filters.first_name:
-                queryset = queryset.filter(user__first_name__icontains=filters.first_name)
-            if filters.last_name:
-                queryset = queryset.filter(user__last_name__icontains=filters.last_name)
-            if filters.user_code:
-                queryset = queryset.filter(user__user_code__icontains=filters.user_code)
-            if filters.national_id:
-                queryset = queryset.filter(user__national_id__icontains=filters.national_id)
-            if filters.faculty:
-                queryset = queryset.filter(faculty_id=filters.faculty)
-            if filters.major:
-                queryset = queryset.filter(major_id=filters.major)
-            if filters.rank:
-                queryset = queryset.filter(rank=filters.rank)
-
-        return queryset
+        if staff_or_assistant(info.context.user):
+            try:
+                if filters is None:
+                    filters = {}
+                filters['major__faculty'] = info.context.user.assistant.faculty.id
+            except ObjectDoesNotExist:
+                pass
+            return resolve_model_with_filters(Professor, filters)
 
     @staticmethod
     @staff_member_required
     def resolve_assistants(root, info, filters=None):
-        queryset = Assistant.objects.all()
-
-        if filters:
-            if filters.first_name:
-                queryset = queryset.filter(user__first_name__icontains=filters.first_name)
-            if filters.last_name:
-                queryset = queryset.filter(user__last_name__icontains=filters.last_name)
-            if filters.user_code:
-                queryset = queryset.filter(user__user_code__icontains=filters.user_code)
-            if filters.national_id:
-                queryset = queryset.filter(user__national_id__icontains=filters.national_id)
-            if filters.faculty:
-                queryset = queryset.filter(faculty_id=filters.faculty)
-            if filters.major:
-                queryset = queryset.filter(major_id=filters.major)
-
-        return queryset
+        return resolve_model_with_filters(Assistant, filters)
 
     @staticmethod
     def resolve_current_user(self, info):

@@ -9,6 +9,7 @@ from university.models import (
     Faculty,
 )
 from users.models import Student
+from utils.schema_utils import resolve_model_with_filters
 from .models import (
     CourseRegistrationRequest,
     StudentCourseParticipant,
@@ -598,33 +599,26 @@ class Query(graphene.ObjectType):
     semester_withdrawal_request = graphene.Field(SemesterWithdrawalRequestType, pk=graphene.ID(required=True))
     deferment_request = graphene.Field(DefermentRequestType, pk=graphene.ID(required=True))
 
-    @staticmethod
-    def resolve_model_with_filters(info, model_class, filter_input=None):
-        queryset = model_class.objects.all()
-        if filter_input:
-            queryset = queryset.filter(**filter_input)
-        return queryset
-
     def resolve_course_registration_requests(self, info, filters=None):
-        return self.resolve_model_with_filters(info, CourseRegistrationRequest, filters)
+        return resolve_model_with_filters(CourseRegistrationRequest, filters)
 
     def resolve_student_course_participants(self, info, filters=None):
-        return self.resolve_model_with_filters(info, StudentCourseParticipant, filters)
+        return resolve_model_with_filters(StudentCourseParticipant, filters)
 
     def resolve_course_correction_requests(self, info, filters=None):
-        return self.resolve_model_with_filters(info, CourseCorrectionRequest, filters)
+        return resolve_model_with_filters(CourseCorrectionRequest, filters)
 
     def resolve_reconsideration_requests(self, info, filters=None):
-        return self.resolve_model_with_filters(info, ReconsiderationRequest, filters)
+        return resolve_model_with_filters(ReconsiderationRequest, filters)
 
     def resolve_emergency_withdrawal_requests(self, info, filters=None):
-        return self.resolve_model_with_filters(info, EmergencyWithdrawalRequest, filters)
+        return resolve_model_with_filters(EmergencyWithdrawalRequest, filters)
 
     def resolve_semester_withdrawal_requests(self, info, filters=None):
-        return self.resolve_model_with_filters(info, SemesterWithdrawalRequest, filters)
+        return resolve_model_with_filters(SemesterWithdrawalRequest, filters)
 
     def resolve_deferment_requests(self, info, filters=None):
-        return self.resolve_model_with_filters(info, DefermentRequest, filters)
+        return resolve_model_with_filters(DefermentRequest, filters)
 
     @staticmethod
     def resolve_course_registration_request(info, pk):

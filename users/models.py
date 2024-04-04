@@ -45,3 +45,4 @@ class Professor(models.Model):
 class Assistant(models.Model):
     user = models.OneToOneField('User', on_delete=models.CASCADE, related_name='assistant')
     faculty = models.ForeignKey('university.Faculty', on_delete=models.CASCADE, related_name='assistants')
+    major = models.ForeignKey('university.Major', on_delete=models.CASCADE, related_name='assistants')
