@@ -1,10 +1,14 @@
 import graphene
-from django.db import transaction
-from graphene_django import DjangoObjectType
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from graphene_django import DjangoObjectType
 from graphql import GraphQLError
 from graphql_jwt.decorators import staff_member_required, login_required
 
+from users.models import (
+    Professor,
+    Student,
+)
 from utils.schema_utils import (
     resolve_model_with_filters,
     staff_or_same_faculty_assistant,
@@ -17,10 +21,6 @@ from .models import (
     SemesterStudent,
     Faculty,
     Major,
-)
-from users.models import (
-    Professor,
-    Student,
 )
 
 
@@ -161,6 +161,11 @@ class CreateSemesterCourse(graphene.Mutation):
         semester_course['course'] = get_object_or_404(Course, pk=semester_course['course'])
         if staff_or_same_faculty_assistant(info.context.user, semester_course['course'].faculty):
             semester_course['semester'] = get_object_or_404(Semester, pk=semester_course['semester'])
+            if semester_course['semester'].course_addition_drop_end <= timezone.now():
+                raise GraphQLError("Semester Course Creation Time Range Is Passed")
+            if semester_course['semester'].type == 'P':
+                semester_course['exam_datetime'] = None
+                semester_course['exam_location'] = None
             semester_course['professor'] = get_object_or_404(Professor, pk=semester_course['professor'])
             semester_course = SemesterCourse.objects.create(**semester_course)
             return CreateSemesterCourse(semester_course=semester_course)
