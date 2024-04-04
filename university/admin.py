@@ -12,7 +12,7 @@ from .models import (
 
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
-    list_display = ['name', 'faculty', 'units', 'type']
+    list_display = ['name', 'major', 'units', 'type']
 
 
 @admin.register(SemesterCourse)

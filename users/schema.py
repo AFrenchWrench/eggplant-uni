@@ -15,6 +15,7 @@ from graphql_jwt.decorators import (
     login_required,
 )
 from graphql_jwt.shortcuts import get_token
+
 from university.models import (
     Semester,
     Faculty,
@@ -31,7 +32,7 @@ from users.models import (
     Professor,
     Assistant,
 )
-from utils.schema_utils import resolve_model_with_filters, staff_or_same_faculty_assistant, staff_or_assistant
+from utils.schema_utils import resolve_model_with_filters, staff_or_assistant
 
 User = get_user_model()
 
@@ -313,15 +314,16 @@ class Login(graphene.Mutation):
         return Login(token=token, user=user)
 
 
-class Logout(graphene.Mutation):
-    success = graphene.Boolean()
 
-    @staticmethod
-    @login_required
-    def mutate(root, info):
-        token = get_token(info.context)
-        token.blacklist()
-        return Logout(success=True)
+# class Logout(graphene.Mutation):
+#     success = graphene.Boolean()
+#
+#     @staticmethod
+#     @login_required
+#     def mutate(root, info):
+#         token = RefreshToken(info.context.user)
+#         token.blacklist()
+#         return Logout(success=True)
 
 
 class Mutation(graphene.ObjectType):
@@ -329,7 +331,8 @@ class Mutation(graphene.ObjectType):
     update_user = UpdateUser.Field()
     delete_user = DeleteUser.Field()
     login = Login.Field()
-    logout = Logout.Field()
+    # logout = Logout.Field()
+
 
 
 class StudentFilterInput(graphene.InputObjectType):

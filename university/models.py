@@ -1,23 +1,25 @@
 from datetime import date
+
 from django.db import models
 
 
 class Course(models.Model):
     name = models.CharField(max_length=100)
-    faculty = models.ForeignKey('Faculty', on_delete=models.CASCADE, related_name='courses')
+    major = models.ForeignKey('Major', on_delete=models.CASCADE, related_name='courses')
     prerequisites = models.ManyToManyField('Course', related_name='prerequisite_for', blank=True)
     corequisites = models.ManyToManyField('Course', related_name='corequisite_for', blank=True)
     units = models.PositiveIntegerField()
     type = models.CharField(max_length=20,
-                            choices=[('G', 'General'), ('M', 'Major'), ('F', 'Foundation'), ('E', 'Elective')])
+                            choices=[('G', 'General'), ('M', 'Major'), ('F', 'Foundation'), ('E', 'Elective'),
+                                     ('P', 'Practical')])
 
 
 class SemesterCourse(models.Model):
     course = models.ForeignKey('Course', on_delete=models.CASCADE, related_name='semester_courses')
     semester = models.ForeignKey('Semester', on_delete=models.CASCADE, related_name='semester_courses')
     day_and_time = models.CharField(max_length=100)
-    exam_datetime = models.DateTimeField()
-    exam_location = models.CharField(max_length=100)
+    exam_datetime = models.DateTimeField(null=True)
+    exam_location = models.CharField(max_length=100, null=True)
     professor = models.ForeignKey('users.Professor', on_delete=models.CASCADE, related_name='semester_courses')
     capacity = models.PositiveIntegerField()
 
