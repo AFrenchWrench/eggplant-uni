@@ -314,6 +314,7 @@ class Login(graphene.Mutation):
         return Login(token=token, user=user)
 
 
+
 # class Logout(graphene.Mutation):
 #     success = graphene.Boolean()
 #
@@ -331,6 +332,7 @@ class Mutation(graphene.ObjectType):
     delete_user = DeleteUser.Field()
     login = Login.Field()
     # logout = Logout.Field()
+
 
 
 class StudentFilterInput(graphene.InputObjectType):
