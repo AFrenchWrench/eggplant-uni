@@ -62,7 +62,7 @@ class MajorType(DjangoObjectType):
 
 class CreateCourseInput(graphene.InputObjectType):
     name = graphene.String(required=True)
-    faculty = graphene.ID(required=True)
+    major = graphene.ID(required=True)
     prerequisites = graphene.List(graphene.ID, required=False)
     corequisites = graphene.List(graphene.ID, required=False)
     units = graphene.Int(required=True)
@@ -126,15 +126,17 @@ class CreateCourse(graphene.Mutation):
     @login_required
     def mutate(root, info, input):
         course_data = input
-        course_data['faculty'] = get_object_or_404(Faculty, pk=course_data['faculty'])
-        if staff_or_same_faculty_assistant(info.context.user, course_data['faculty']):
+        course_data['major'] = get_object_or_404(Major, pk=course_data['major'])
+        if staff_or_same_faculty_assistant(info.context.user, course_data['major'].faculty):
             try:
                 prerequisites = [get_object_or_404(Course, pk=course_id) for course_id in course_data['prerequisites']]
+                course_data.pop('prerequisites')
             except KeyError:
                 prerequisites = None
 
             try:
                 corequisites = [get_object_or_404(Course, pk=course_id) for course_id in course_data['corequisites']]
+                course_data.pop('corequisites')
             except KeyError:
                 corequisites = None
 
@@ -160,11 +162,11 @@ class CreateSemesterCourse(graphene.Mutation):
     def mutate(root, info, input):
         semester_course = input
         semester_course['course'] = get_object_or_404(Course, pk=semester_course['course'])
-        if staff_or_same_faculty_assistant(info.context.user, semester_course['course'].faculty):
+        if staff_or_same_faculty_assistant(info.context.user, semester_course['course'].major.faculty):
             semester_course['semester'] = get_object_or_404(Semester, pk=semester_course['semester'])
             if semester_course['semester'].course_addition_drop_end <= timezone.now():
                 raise GraphQLError("Semester Course Creation Time Range Is Passed")
-            if semester_course['semester'].type == 'P':
+            if semester_course['course'].type == 'P':
                 semester_course['exam_datetime'] = None
                 semester_course['exam_location'] = None
             semester_course['professor'] = get_object_or_404(Professor, pk=semester_course['professor'])
@@ -313,8 +315,8 @@ class UpdateCourse(graphene.Mutation):
         course = get_object_or_404(Course, pk=pk)
         if staff_or_same_faculty_assistant(info.context.user, course.faculty):
             for field, value in input.items():
-                if field == 'faculty':
-                    value = get_object_or_404(Faculty, pk=value)
+                if field == 'major':
+                    value = get_object_or_404(Major, pk=value)
                 elif field == 'prerequisites' and value is not None:
                     value = [get_object_or_404(Course, pk=course_id) for course_id in value]
                 elif field == 'corequisites' and value is not None:
@@ -336,7 +338,7 @@ class UpdateSemesterCourse(graphene.Mutation):
     @login_required
     def mutate(root, info, pk, input):
         semester_course = get_object_or_404(SemesterCourse, pk=pk)
-        if staff_or_same_faculty_assistant(info.context.user, semester_course.course.faculty):
+        if staff_or_same_faculty_assistant(info.context.user, semester_course.course.major.faculty):
             for field, value in input.items():
                 if field == 'course':
                     value = get_object_or_404(Course, pk=value)
@@ -666,7 +668,7 @@ class Query(graphene.ObjectType):
         return get_object_or_404(StudentCourse, pk=pk)
 
     @staticmethod
-    @staff_member_required
+    @login_required
     def resolve_semester(root, info, pk):
         return get_object_or_404(Semester, pk=pk)
 

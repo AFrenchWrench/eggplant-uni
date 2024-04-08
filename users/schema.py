@@ -18,13 +18,16 @@ from university.models import (
     Faculty,
     Major,
 )
-from users.forms import (
+from university.schema import (
+    StudentCourseType,
+)
+from .forms import (
     UserForm,
     UpdateUserForm,
     ProfessorForm,
     UpdateProfessorForm,
 )
-from users.models import (
+from .models import (
     Student,
     Professor,
     Assistant,
@@ -173,7 +176,6 @@ class UpdateUserInput(graphene.InputObjectType):
     gender = graphene.String()
     birth_date = graphene.Date()
     image = Upload()
-    user_code = graphene.String()
 
 
 class UpdateStudentInput(graphene.InputObjectType):
@@ -387,13 +389,18 @@ class Query(graphene.ObjectType):
 
     current_user = graphene.Field(UserType)
 
+    student_passed_courses = graphene.List(StudentCourseType, pk=graphene.ID())
+
+    student_current_semester_courses = graphene.List(StudentCourseType, pk=graphene.ID())
+
+    student_remaining_semesters = graphene.Field(StudentCourseType)
+
     @staticmethod
     @login_required
     def resolve_student(root, info, pk=None):
         sender = info.context.user
         if staff_or_assistant(sender):
-            user = get_object_or_404(User, pk=pk)
-            student = get_object_or_404(Student, user=user)
+            student = get_object_or_404(Student, pk=pk)
             try:
                 faculty = sender.assistant.faculty
                 if student.major.faculty == faculty:
@@ -416,8 +423,7 @@ class Query(graphene.ObjectType):
     def resolve_professor(root, info, pk=None):
         sender = info.context.user
         if staff_or_assistant(sender):
-            user = get_object_or_404(User, pk=pk)
-            professor = get_object_or_404(Professor, user=user)
+            professor = get_object_or_404(Professor, pk=pk)
             try:
                 faculty = sender.assistant.faculty
                 if professor.major.faculty == faculty:
@@ -438,8 +444,7 @@ class Query(graphene.ObjectType):
     @staticmethod
     @staff_member_required
     def resolve_assistant(root, info, pk):
-        user = get_object_or_404(User, pk=pk)
-        return get_object_or_404(Assistant, user=user)
+        return get_object_or_404(Assistant, pk=pk)
 
     @staticmethod
     @login_required
@@ -473,11 +478,99 @@ class Query(graphene.ObjectType):
         return resolve_model_with_filters(Assistant, filters)
 
     @staticmethod
+    @login_required
     def resolve_current_user(self, info):
         sender = info.context.user
-        if sender.is_anonymous:
-            raise GraphQLError('User not logged in.')
         return sender
+
+    @staticmethod
+    @login_required
+    def resolve_student_passed_courses(self, info, pk=None):
+        sender = info.context.user
+        if staff_or_assistant(sender):
+            user = get_object_or_404(User, pk=pk)
+            student = get_object_or_404(Student, user=user)
+            try:
+                faculty = sender.assistant.faculty
+                if student.major.faculty == faculty:
+                    return student.get_passed_courses()
+                else:
+                    raise GraphQLError("This student is not in your faculty")
+            except ObjectDoesNotExist:
+                pass
+            return student.get_passed_courses()
+        elif pk is not None:
+            student = get_object_or_404(Student, pk=pk)
+
+            try:
+                if sender.professor == student.advisor:
+                    return student.get_passed_courses()
+                else:
+                    raise GraphQLError("You are not the advisor of this student")
+            except ObjectDoesNotExist:
+                raise GraphQLError("You are not a Professor")
+        else:
+            try:
+                student = sender.student
+                return student.get_passed_courses()
+            except ObjectDoesNotExist:
+                raise GraphQLError("You are not a student")
+
+    @staticmethod
+    @login_required
+    def resolve_student_current_semester_courses(self, info, pk=None):
+        sender = info.context.user
+        if staff_or_assistant(sender):
+            user = get_object_or_404(User, pk=pk)
+            student = get_object_or_404(Student, user=user)
+            try:
+                faculty = sender.assistant.faculty
+                if student.major.faculty == faculty:
+                    return student.get_current_semester_courses()
+                else:
+                    raise GraphQLError("This student is not in your faculty")
+            except ObjectDoesNotExist:
+                pass
+            return student.get_current_semester_courses()
+        elif pk is not None:
+            student = get_object_or_404(Student, pk=pk)
+
+            try:
+                if sender.professor == student.advisor:
+                    return student.get_current_semester_courses()
+                else:
+                    raise GraphQLError("You are not the advisor of this student")
+            except ObjectDoesNotExist:
+                raise GraphQLError("You are not a Professor")
+        else:
+            try:
+                student = sender.student
+                return student.get_current_semester_courses()
+            except ObjectDoesNotExist:
+                raise GraphQLError("You are not a student")
+
+    @staticmethod
+    @login_required
+    def resolve_student_remaining_semesters(self, info, pk=None):
+        sender = info.context.user
+        if staff_or_assistant(sender):
+            student = get_object_or_404(Student, pk=pk)
+            try:
+                faculty = sender.assistant.faculty
+                if student.major.faculty == faculty:
+                    return student.get_academic_semester_count()
+                else:
+                    raise GraphQLError("This student is not in your faculty")
+            except ObjectDoesNotExist:
+                pass
+            return student.get_academic_semester_count()
+        else:
+            try:
+                student = sender.student
+            except ObjectDoesNotExist:
+                raise GraphQLError("You are not a student")
+
+            return student.get_academic_semester_count()
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

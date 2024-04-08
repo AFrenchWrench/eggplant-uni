@@ -35,10 +35,10 @@ class StudentCourse(models.Model):
                                 help_text="Student Course To Student Relation")
     course = models.ForeignKey('SemesterCourse', on_delete=models.CASCADE, related_name='student_courses',
                                null=True, help_text="Student Course To Student Relation")
-    grade = models.FloatField(help_text="Course Grade")
+    grade = models.FloatField(help_text="Course Grade", default=0)
 
     def is_passed(self):
-        if self.grade >= 10:
+        if self.grade >= 10.00:
             return True
         else:
             return False
@@ -60,7 +60,12 @@ class Semester(models.Model):
     semester_end_date = models.DateField(help_text="Semester End Time")
 
     def is_active(self):
-        return True if self.semester_end_date >= date.today() else False
+        if self.semester_end_date >= date.today():
+            self.is_active = True
+            return True
+        else:
+            self.is_active = False
+            return False
 
 
 class SemesterStudent(models.Model):

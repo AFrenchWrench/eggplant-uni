@@ -40,6 +40,12 @@ class Student(models.Model):
     def get_academic_semester_count(self):
         return self.semester_students.filter(is_active=True).count()
 
+    def get_passed_courses(self):
+        return [course for course in self.courses.all() if course.is_passed()]
+
+    def get_current_semester_courses(self):
+        return [course for course in self.courses.all() if course.course.semester.is_active()]
+
 
 class Professor(models.Model):
     user = models.OneToOneField('User', on_delete=models.CASCADE, related_name='professor',
