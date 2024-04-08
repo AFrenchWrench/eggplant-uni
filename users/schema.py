@@ -10,11 +10,9 @@ from graphene_file_upload.scalars import Upload
 from graphql import (
     GraphQLError,
 )
-from graphql_jwt.decorators import (
-    staff_member_required,
-    login_required,
-)
 from graphql_jwt.shortcuts import get_token
+
+from admin_dash.models import BurnedTokens
 from university.models import (
     Semester,
     Faculty,
@@ -31,7 +29,13 @@ from users.models import (
     Professor,
     Assistant,
 )
-from utils.schema_utils import resolve_model_with_filters, staff_or_same_faculty_assistant, staff_or_assistant
+from utils.schema_utils import (
+    resolve_model_with_filters,
+    staff_or_assistant,
+    staff_or_same_faculty_assistant,
+    login_required,
+    staff_member_required,
+)
 
 User = get_user_model()
 
@@ -205,24 +209,29 @@ class UpdateUser(graphene.Mutation):
     assistant = graphene.Field(AssistantType)
 
     @staticmethod
-    @staff_member_required
+    @login_required
     def mutate(root, info, pk, base_user_input=None, student_input=None, professor_input=None, assistant_input=None):
         form = UpdateUserForm(base_user_input)
         if form.is_valid() or base_user_input is None:
 
             user = get_object_or_404(User, pk=pk)
+            sender = info.context.user
 
             if base_user_input is not None:
                 for field, value in base_user_input.items():
                     setattr(user, field, value)
 
             if student_input:
-                student = UpdateUser._update_student(user, student_input)
-                return UpdateUser(student=student)
+                student = get_object_or_404(Student, user=user)
+                if staff_or_same_faculty_assistant(sender, student.major.faculty) or pk == sender.id:
+                    student = UpdateUser._update_student(user, student, student_input)
+                    return UpdateUser(student=student)
             elif professor_input:
+                professor = get_object_or_404(Professor, user=user)
                 form = UpdateProfessorForm(professor_input)
-                if form.is_valid():
-                    professor = UpdateUser._update_professor(user, professor_input)
+                if form.is_valid() and (
+                        staff_or_same_faculty_assistant(sender, professor.major.faculty) or pk == sender.id):
+                    professor = UpdateUser._update_professor(user, professor, professor_input)
                     return UpdateUser(professor=professor)
                 else:
                     errors = form.errors.as_data()
@@ -230,8 +239,10 @@ class UpdateUser(graphene.Mutation):
                     raise GraphQLError(', '.join(error_messages))
 
             elif assistant_input:
-                assistant = UpdateUser._update_assistant(user, assistant_input)
-                return UpdateUser(assistant=assistant)
+                assistant = get_object_or_404(Assistant, user=user)
+                if sender.is_staff:
+                    assistant = UpdateUser._update_assistant(user, assistant, assistant_input)
+                    return UpdateUser(assistant=assistant)
 
             user.save()
             return UpdateUser(user=user)
@@ -243,8 +254,7 @@ class UpdateUser(graphene.Mutation):
             raise GraphQLError(', '.join(error_messages))
 
     @staticmethod
-    def _update_student(user, student_input):
-        student = get_object_or_404(Student, user=user)
+    def _update_student(user, student, student_input):
         for field, value in student_input.items():
             if field == 'major' and value is not None:
                 value = get_object_or_404(Major, pk=value)
@@ -255,8 +265,7 @@ class UpdateUser(graphene.Mutation):
         return student
 
     @staticmethod
-    def _update_professor(user, professor_input):
-        professor = get_object_or_404(Professor, user=user)
+    def _update_professor(user, professor, professor_input):
         for field, value in professor_input.items():
             if field == 'major' and value is not None:
                 value = get_object_or_404(Major, pk=value)
@@ -265,8 +274,7 @@ class UpdateUser(graphene.Mutation):
         return professor
 
     @staticmethod
-    def _update_assistant(user, assistant_input):
-        assistant = get_object_or_404(Assistant, user=user)
+    def _update_assistant(user, assistant, assistant_input):
         for field, value in assistant_input.items():
             if field == 'faculty' and value is not None:
                 value = get_object_or_404(Faculty, pk=value)
@@ -302,7 +310,13 @@ class Login(graphene.Mutation):
 
     @staticmethod
     def mutate(root, info, username, password):
-        if info.context.user.is_authenticated:
+        sender = info.context.user
+        try:
+            token = BurnedTokens.objects.get(token=info.context.headers.get('Authorization'))
+            token = False
+        except BurnedTokens.DoesNotExist:
+            token = True
+        if sender.is_authenticated and token:
             raise GraphQLError("You are already logged in")
 
         user = authenticate(username=username, password=password)
@@ -319,8 +333,8 @@ class Logout(graphene.Mutation):
     @staticmethod
     @login_required
     def mutate(root, info):
-        token = get_token(info.context)
-        token.blacklist()
+        token = info.context.headers.get('Authorization')
+        BurnedTokens.objects.create(token=token)
         return Logout(success=True)
 
 
@@ -376,10 +390,12 @@ class Query(graphene.ObjectType):
     @staticmethod
     @login_required
     def resolve_student(root, info, pk=None):
-        if staff_or_assistant(info.context.user):
-            student = get_object_or_404(Student, pk=pk)
+        sender = info.context.user
+        if staff_or_assistant(sender):
+            user = get_object_or_404(User, pk=pk)
+            student = get_object_or_404(Student, user=user)
             try:
-                faculty = info.context.user.assistant.faculty
+                faculty = sender.assistant.faculty
                 if student.major.faculty == faculty:
                     return student
                 else:
@@ -388,9 +404,8 @@ class Query(graphene.ObjectType):
                 pass
             return student
         else:
-            user = info.context.user
             try:
-                student = user.student
+                student = sender.student
             except ObjectDoesNotExist:
                 raise GraphQLError("You are not a student")
 
@@ -399,10 +414,12 @@ class Query(graphene.ObjectType):
     @staticmethod
     @login_required
     def resolve_professor(root, info, pk=None):
-        if staff_or_assistant(info.context.user):
-            professor = get_object_or_404(Professor, pk=pk)
+        sender = info.context.user
+        if staff_or_assistant(sender):
+            user = get_object_or_404(User, pk=pk)
+            professor = get_object_or_404(Professor, user=user)
             try:
-                faculty = info.context.user.assistant.faculty
+                faculty = sender.assistant.faculty
                 if professor.major.faculty == faculty:
                     return professor
                 else:
@@ -411,9 +428,8 @@ class Query(graphene.ObjectType):
                 pass
             return professor
         else:
-            user = info.context.user
             try:
-                professor = user.professor
+                professor = sender.professor
             except ObjectDoesNotExist:
                 raise GraphQLError("You are not a professor")
 
@@ -422,16 +438,18 @@ class Query(graphene.ObjectType):
     @staticmethod
     @staff_member_required
     def resolve_assistant(root, info, pk):
-        return get_object_or_404(Assistant, pk=pk)
+        user = get_object_or_404(User, pk=pk)
+        return get_object_or_404(Assistant, user=user)
 
     @staticmethod
     @login_required
     def resolve_students(root, info, filters=None):
-        if staff_or_assistant(info.context.user):
+        sender = info.context.user
+        if staff_or_assistant(sender):
             try:
                 if filters is None:
                     filters = {}
-                filters['major__faculty'] = info.context.user.assistant.faculty.id
+                filters['major__faculty'] = sender.assistant.faculty.id
             except ObjectDoesNotExist:
                 pass
             return resolve_model_with_filters(Student, filters)
@@ -439,11 +457,12 @@ class Query(graphene.ObjectType):
     @staticmethod
     @login_required
     def resolve_professors(root, info, filters=None):
-        if staff_or_assistant(info.context.user):
+        sender = info.context.user
+        if staff_or_assistant(sender):
             try:
                 if filters is None:
                     filters = {}
-                filters['major__faculty'] = info.context.user.assistant.faculty.id
+                filters['major__faculty'] = sender.assistant.faculty.id
             except ObjectDoesNotExist:
                 pass
             return resolve_model_with_filters(Professor, filters)
@@ -455,10 +474,10 @@ class Query(graphene.ObjectType):
 
     @staticmethod
     def resolve_current_user(self, info):
-        user = info.context.user
-        if user.is_anonymous:
+        sender = info.context.user
+        if sender.is_anonymous:
             raise GraphQLError('User not logged in.')
-        return user
+        return sender
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

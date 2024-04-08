@@ -9,7 +9,6 @@ from university.models import (
     Faculty,
 )
 from users.models import Student
-from utils.schema_utils import resolve_model_with_filters
 from .models import (
     CourseRegistrationRequest,
     StudentCourseParticipant,
@@ -18,6 +17,11 @@ from .models import (
     EmergencyWithdrawalRequest,
     SemesterWithdrawalRequest,
     DefermentRequest,
+)
+from utils.schema_utils import (
+    resolve_model_with_filters,
+    login_required,
+    staff_member_required,
 )
 
 

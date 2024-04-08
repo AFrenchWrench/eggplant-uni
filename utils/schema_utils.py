@@ -1,6 +1,8 @@
 from graphql import GraphQLError
 from django.core.exceptions import ObjectDoesNotExist
 
+from admin_dash.models import BurnedTokens
+
 
 def main():
     pass
@@ -40,6 +42,41 @@ def staff_or_assistant(user):
         if user.is_staff:
             return True
         return False
+
+
+def login_required(func):
+    def wrapper(root, info, *args, **kwargs):
+        user = info.context.user
+        token = info.context.headers.get('Authorization')
+        try:
+            BurnedTokens.objects.get(token=token)
+            token = False
+        except BurnedTokens.DoesNotExist:
+            token = True
+        if user.is_authenticated and token:
+            return func(root, info, *args, **kwargs)
+        else:
+            raise GraphQLError("Your are not logged in")
+
+    return wrapper
+
+
+def staff_member_required(func):
+    def wrapper(root, info, *args, **kwargs):
+        user = info.context.user
+        token = info.context.headers.get('Authorization')
+        try:
+            BurnedTokens.objects.get(token=token)
+            token = False
+        except BurnedTokens.DoesNotExist:
+            token = True
+
+        if user.is_authenticated and user.is_staff and token:
+            return func(root, info, *args, **kwargs)
+        else:
+            raise GraphQLError("You do not have permission to perform this action.")
+
+    return wrapper
 
 
 if __name__ == '__main__':
