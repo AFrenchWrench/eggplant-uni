@@ -59,6 +59,14 @@ class Professor(models.Model):
                                       "('A1', 'Assistant Professor'), "
                                       "('A2', 'Associate Professor'), ('P', 'Professor')")
 
+    # def students(self):
+    #     students = {k: v
+    #                 for k, v in self.semester_courses.all().}
+    # TODO: finish this function please and use it on filtering course registration request , sorry I'm dying XD
+    # this function should get all of the professors students that are in an active semester course with this professor
+    # this professor could be teaching multiple courses in one semester so mind that
+    # if you see an easier way of doing this feel free I just wanted to give my idea XD
+
 
 class Assistant(models.Model):
     user = models.OneToOneField('User', on_delete=models.CASCADE, related_name='assistant',

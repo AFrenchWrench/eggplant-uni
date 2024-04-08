@@ -116,6 +116,11 @@ class CreateMajorInput(graphene.InputObjectType):
     degree_level = graphene.String(required=True)
 
 
+# TODO : if you were in the mood please add some logic to any mutation that you see fit for example
+#  if we want to create a semester we have to check for it not to overlap with other semesters
+#  and I saw something about overlapping semester courses so I guess the field day and time should be added for
+#  semester course TY XD
+
 class CreateCourse(graphene.Mutation):
     class Arguments:
         input = CreateCourseInput(required=True)
@@ -181,6 +186,7 @@ class CreateStudentCourse(graphene.Mutation):
     student_course = graphene.Field(StudentCourseType)
 
     @staticmethod
+    @staff_member_required
     def mutate(root, info, input):
         student_course = input
         student_course['student'] = get_object_or_404(Student, pk=student_course['student'])
@@ -210,6 +216,7 @@ class CreateSemesterStudent(graphene.Mutation):
     semester_student = graphene.Field(SemesterStudentType)
 
     @staticmethod
+    @staff_member_required
     def mutate(root, info, input):
         semester_student = input
         semester_student['student'] = get_object_or_404(Student, pk=semester_student['student'])
@@ -239,6 +246,7 @@ class CreateMajor(graphene.Mutation):
     major = graphene.Field(MajorType)
 
     @staticmethod
+    @staff_member_required
     def mutate(root, info, input):
         major = input
         major['faculty'] = get_object_or_404(Faculty, pk=major['faculty'])
@@ -359,6 +367,7 @@ class UpdateStudentCourse(graphene.Mutation):
     student_course = graphene.Field(StudentCourseType)
 
     @staticmethod
+    @staff_member_required
     def mutate(root, info, pk, input):
         student_course = get_object_or_404(StudentCourse, pk=pk)
         for field, value in input.items():
@@ -396,6 +405,7 @@ class UpdateSemesterStudent(graphene.Mutation):
     semester_student = graphene.Field(SemesterStudentType)
 
     @staticmethod
+    @staff_member_required
     def mutate(root, info, pk, input):
         semester_student = get_object_or_404(SemesterStudent, pk=pk)
         for field, value in input.items():
@@ -433,6 +443,7 @@ class UpdateMajor(graphene.Mutation):
     major = graphene.Field(MajorType)
 
     @staticmethod
+    @staff_member_required
     def mutate(root, info, pk, input):
         major = get_object_or_404(Major, pk=pk)
         for field, value in input.items():
@@ -480,6 +491,7 @@ class DeleteStudentCourse(graphene.Mutation):
     success = graphene.Boolean()
 
     @staticmethod
+    @staff_member_required
     def mutate(root, info, pk):
         student_course = get_object_or_404(StudentCourse, pk=pk)
         student_course.delete()
@@ -507,6 +519,7 @@ class DeleteSemesterStudent(graphene.Mutation):
     success = graphene.Boolean()
 
     @staticmethod
+    @staff_member_required
     def mutate(root, info, pk):
         semester_student = get_object_or_404(SemesterStudent, pk=pk)
         semester_student.delete()
@@ -534,6 +547,7 @@ class DeleteMajor(graphene.Mutation):
     success = graphene.Boolean()
 
     @staticmethod
+    @staff_member_required
     def mutate(root, info, pk):
         major = get_object_or_404(Major, pk=pk)
         major.delete()
@@ -636,6 +650,7 @@ class Query(graphene.ObjectType):
     def resolve_semester_courses(self, info, filters=None):
         return resolve_model_with_filters(SemesterCourse, filters)
 
+    @staff_member_required
     def resolve_student_courses(self, info, filters=None):
         return resolve_model_with_filters(StudentCourse, filters)
 
@@ -643,6 +658,7 @@ class Query(graphene.ObjectType):
     def resolve_semesters(self, info, filters=None):
         return resolve_model_with_filters(Semester, filters)
 
+    @staff_member_required
     def resolve_semester_students(self, info, filters=None):
         return resolve_model_with_filters(SemesterStudent, filters)
 
@@ -650,6 +666,7 @@ class Query(graphene.ObjectType):
     def resolve_faculties(self, info, filters=None):
         return resolve_model_with_filters(Faculty, filters)
 
+    @staff_member_required
     def resolve_majors(self, info, filters=None):
         return resolve_model_with_filters(Major, filters)
 
@@ -664,6 +681,7 @@ class Query(graphene.ObjectType):
         return get_object_or_404(SemesterCourse, pk=pk)
 
     @staticmethod
+    @staff_member_required
     def resolve_student_course(root, info, pk):
         return get_object_or_404(StudentCourse, pk=pk)
 
@@ -673,6 +691,7 @@ class Query(graphene.ObjectType):
         return get_object_or_404(Semester, pk=pk)
 
     @staticmethod
+    @staff_member_required
     def resolve_semester_student(root, info, pk):
         return get_object_or_404(SemesterStudent, pk=pk)
 
@@ -682,6 +701,7 @@ class Query(graphene.ObjectType):
         return get_object_or_404(Faculty, pk=pk)
 
     @staticmethod
+    @staff_member_required
     def resolve_major(root, info, pk):
         return get_object_or_404(Major, pk=pk)
 

@@ -1,14 +1,16 @@
 import graphene
+from django.utils import timezone
 from graphene_django.types import DjangoObjectType
 from django.shortcuts import get_object_or_404
 from graphene_file_upload.scalars import Upload
+from graphql import GraphQLError
 
 from university.models import (
     SemesterCourse,
     Semester,
     Faculty,
 )
-from users.models import Student
+from users.models import Student, Professor
 from .models import (
     CourseRegistrationRequest,
     StudentCourseParticipant,
@@ -61,41 +63,34 @@ class DefermentRequestType(DjangoObjectType):
 
 
 class CreateCourseRegistrationRequestInput(graphene.InputObjectType):
-    student = graphene.ID(required=True)
     courses = graphene.List(graphene.ID, required=True)
 
 
 class CreateStudentCourseParticipantInput(graphene.InputObjectType):
-    student = graphene.ID(required=True)
     course = graphene.ID(required=True)
 
 
 class CreateCourseCorrectionRequestInput(graphene.InputObjectType):
-    student = graphene.ID(required=True)
     dropped_courses = graphene.List(graphene.ID, required=True)
     added_courses = graphene.List(graphene.ID, required=True)
 
 
 class CreateReconsiderationRequestInput(graphene.InputObjectType):
-    student = graphene.ID(required=True)
     course = graphene.ID(required=True)
     text = graphene.String(required=True)
 
 
 class CreateEmergencyWithdrawalRequestInput(graphene.InputObjectType):
-    student = graphene.ID(required=True)
     course = graphene.ID(required=True)
     text = graphene.String(required=True)
 
 
 class CreateSemesterWithdrawalRequestInput(graphene.InputObjectType):
-    student = graphene.ID(required=True)
     semester = graphene.ID(required=True)
     text = graphene.String(required=True)
 
 
 class CreateDefermentRequestInput(graphene.InputObjectType):
-    student = graphene.ID(required=True)
     file = Upload(required=True)
     semester = graphene.ID(required=True)
     faculty = graphene.ID(required=True)
@@ -108,14 +103,34 @@ class CreateCourseRegistrationRequest(graphene.Mutation):
     course_registration_request = graphene.Field(CourseRegistrationRequestType)
 
     @staticmethod
+    @login_required
     def mutate(self, info, input):
-        student = get_object_or_404(Student, pk=input['student'])
-        courses = [get_object_or_404(SemesterCourse, pk=course_id) for course_id in input['courses']]
+        semester = [semester for semester in Semester.objects.all() if semester.is_active()][0]
+        if semester.course_selection_end_time < timezone.now():
+            raise GraphQLError("The Course Selection Time is Over")
+        try:
+            user = info.context.user
+            student = user.student
+            student = get_object_or_404(Student, pk=student.id)
+            courses = [get_object_or_404(SemesterCourse, pk=course_id) for course_id in input['courses']]
 
-        course_registration_request = CourseRegistrationRequest.objects.create(student=student)
-        course_registration_request.courses.set(courses)
+            # TODO : create a form to validate the selected courses based on document
+            # درس ͖یشنیاز حتما باید در وضعیت قبول باشد
+            # درس تکراری یا پاس شده نمیتوان برداشت
+            # درس تکمیل را نمیتوان اخذ کرد
+            # درس همنیاز را نمیتوان زودتر از درسی که همنیاز آن شده حذف کرد
+            # در صورت معدل ترم ͖یش بالای  ۱۷دانشجو حق دارد  ۲۴واحد اخذ کند و در غیر این صورت  ۲۰واحد در یک
+            # انتخاب واحد می تواند اخذ کند
+            # تداخل زمانی در امتحان و کلاس نباید وجود داشته باشد
+            # دانشجو در صورت داشتن سنوات میتواند انتخاب واحد کند
+            # تنها دروس مرتبط به رشته را میتوان برداشت
+            # و هر خطایی که بنظر شما منطقی میباشد باید ͖یادهسازی شود
 
-        return CreateCourseRegistrationRequest(course_registration_request=course_registration_request)
+            course_registration_request = CourseRegistrationRequest.objects.create(student=student, courses=courses)
+
+            return CreateCourseRegistrationRequest(course_registration_request=course_registration_request)
+        except Student.DoesNotExist:
+            raise GraphQLError("You have to be a Student to create this request")
 
 
 class CreateStudentCourseParticipant(graphene.Mutation):
@@ -142,16 +157,27 @@ class CreateCourseCorrectionRequest(graphene.Mutation):
     course_correction_request = graphene.Field(CourseCorrectionRequestType)
 
     @staticmethod
+    @login_required
     def mutate(self, info, input):
-        student = get_object_or_404(Student, pk=input['student'])
-        dropped_courses = [get_object_or_404(SemesterCourse, pk=course_id) for course_id in input['dropped_courses']]
-        added_courses = [get_object_or_404(SemesterCourse, pk=course_id) for course_id in input['added_courses']]
+        semester = [semester for semester in Semester.objects.all() if semester.is_active()][0]
+        if semester.course_addition_drop_end < timezone.now():
+            raise GraphQLError("The Course addition/drop Time is Over")
+        try:
+            user = info.context.user
+            student = user.student
+            dropped_courses = [get_object_or_404(SemesterCourse, pk=course_id) for course_id in
+                               input['dropped_courses']]
+            added_courses = [get_object_or_404(SemesterCourse, pk=course_id) for course_id in input['added_courses']]
 
-        course_correction_request = CourseCorrectionRequest.objects.create(student=student)
-        course_correction_request.dropped_courses.set(dropped_courses)
-        course_correction_request.added_courses.set(added_courses)
+            # TODO: add same logic as course registration here
 
-        return CreateCourseCorrectionRequest(course_correction_request=course_correction_request)
+            course_correction_request = CourseCorrectionRequest.objects.create(student=student)
+            course_correction_request.dropped_courses.set(dropped_courses)
+            course_correction_request.added_courses.set(added_courses)
+
+            return CreateCourseCorrectionRequest(course_correction_request=course_correction_request)
+        except Student.DoesNotExist:
+            raise GraphQLError("You have to be a Student to create this request")
 
 
 class CreateReconsiderationRequest(graphene.Mutation):
@@ -603,53 +629,78 @@ class Query(graphene.ObjectType):
     semester_withdrawal_request = graphene.Field(SemesterWithdrawalRequestType, pk=graphene.ID(required=True))
     deferment_request = graphene.Field(DefermentRequestType, pk=graphene.ID(required=True))
 
+    # TODO : if you were in the mood manage the access levels of these queries and mutations
+    #  if you weren't I'll do it in the morning
+
+    @login_required
     def resolve_course_registration_requests(self, info, filters=None):
+        user = info.context.user
+        try:
+            student = user.student
+        except Student.DoesNotExist:
+            student = None
+        try:
+            professor = user.professor
+        except Professor.DoesNotExist:
+            professor = None
+
+        filters = filters or {}
+        if student is not None:
+            filters['student'] = student.id
+        elif professor is not None:
+            filters['student'] = professor
         return resolve_model_with_filters(CourseRegistrationRequest, filters)
 
+    @login_required
     def resolve_student_course_participants(self, info, filters=None):
         return resolve_model_with_filters(StudentCourseParticipant, filters)
 
+    @login_required
     def resolve_course_correction_requests(self, info, filters=None):
         return resolve_model_with_filters(CourseCorrectionRequest, filters)
 
+    @login_required
     def resolve_reconsideration_requests(self, info, filters=None):
         return resolve_model_with_filters(ReconsiderationRequest, filters)
 
+    @login_required
     def resolve_emergency_withdrawal_requests(self, info, filters=None):
         return resolve_model_with_filters(EmergencyWithdrawalRequest, filters)
 
+    @login_required
     def resolve_semester_withdrawal_requests(self, info, filters=None):
         return resolve_model_with_filters(SemesterWithdrawalRequest, filters)
 
+    @login_required
     def resolve_deferment_requests(self, info, filters=None):
         return resolve_model_with_filters(DefermentRequest, filters)
 
     @staticmethod
-    def resolve_course_registration_request(info, pk):
+    def resolve_course_registration_request(self, info, pk):
         return get_object_or_404(CourseRegistrationRequest, pk=pk)
 
     @staticmethod
-    def resolve_student_course_participant(info, pk):
+    def resolve_student_course_participant(self, info, pk):
         return get_object_or_404(StudentCourseParticipant, pk=pk)
 
     @staticmethod
-    def resolve_course_correction_request(info, pk):
+    def resolve_course_correction_request(self, info, pk):
         return get_object_or_404(CourseCorrectionRequest, pk=pk)
 
     @staticmethod
-    def resolve_reconsideration_request(info, pk):
+    def resolve_reconsideration_request(self, info, pk):
         return get_object_or_404(ReconsiderationRequest, pk=pk)
 
     @staticmethod
-    def resolve_emergency_withdrawal_request(info, pk):
+    def resolve_emergency_withdrawal_request(self, info, pk):
         return get_object_or_404(EmergencyWithdrawalRequest, pk=pk)
 
     @staticmethod
-    def resolve_semester_withdrawal_request(info, pk):
+    def resolve_semester_withdrawal_request(self, info, pk):
         return get_object_or_404(SemesterWithdrawalRequest, pk=pk)
 
     @staticmethod
-    def resolve_deferment_request(info, pk):
+    def resolve_deferment_request(self, info, pk):
         return get_object_or_404(DefermentRequest, pk=pk)
 
 
