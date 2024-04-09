@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_celery_beat',
     # Apps
     'users',
     'admin_dash',
@@ -123,3 +124,6 @@ GRAPHQL_JWT = {
     "JWT_SECRET_KEY": SECRET_KEY,
     "JWT_ALGORITHM": "HS256",
 }
+
+# celery settings
+CELERY_BROKER_URL = "redis://localhost:6379/0"
