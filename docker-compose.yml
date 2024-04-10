@@ -14,7 +14,6 @@ services:
     container_name: django
     build:
       context: .
-      dockerfile: Dockerfile
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/home/app/web/
@@ -29,7 +28,6 @@ services:
     container_name: celery
     build:
       context: .
-      dockerfile: Dockerfile
     command: celery --app=config worker -l INFO
     volumes:
       - .:/home/app/web/
