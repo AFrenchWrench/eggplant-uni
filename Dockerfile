@@ -1,10 +1,6 @@
 FROM python:3.11.4-alpine
 RUN mkdir -p /home/app
 
-# set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-
 # create the appropriate directories
 ENV HOME=/home/app
 ENV APP_HOME=/home/app/web
