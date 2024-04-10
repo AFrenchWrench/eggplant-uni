@@ -1,6 +1,15 @@
 FROM python:3.11.4-alpine
+RUN mkdir -p /home/app
 
-WORKDIR .
+# set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# create the appropriate directories
+ENV HOME=/home/app
+ENV APP_HOME=/home/app/web
+RUN mkdir $APP_HOME
+WORKDIR $APP_HOME
 
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -9,11 +18,11 @@ ENV PYTHONUNBUFFERED 1
 # install dependencies
 RUN pip install --upgrade pip
 COPY ./requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install -r $APP_HOME/requirements.txt
 
-COPY ./entrypoint.sh .
-RUN chmod +x entrypoint.sh
+COPY ./entrypoint.sh $APP_HOME/entrypoint.sh
+RUN chmod +x $APP_HOME/entrypoint.sh
 
-COPY . .
+COPY . $APP_HOME
 
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["/home/app/web/entrypoint.sh"]
