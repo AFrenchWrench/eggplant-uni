@@ -22,6 +22,7 @@ RUN pip install -r $APP_HOME/requirements.txt
 
 COPY ./entrypoint.sh $APP_HOME/entrypoint.sh
 RUN chmod +x $APP_HOME/entrypoint.sh
+RUN dos2unix $APP_HOME/entrypoint.sh
 
 COPY . $APP_HOME
 
