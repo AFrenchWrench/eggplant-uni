@@ -8,12 +8,12 @@ ENV PYTHONUNBUFFERED 1
 
 # install dependencies
 RUN pip install --upgrade pip
-COPY ./requirements.txt /usr/src/app/requirements.txt
-RUN pip install -r /usr/src/app/requirements.txt
+COPY ./requirements.txt .
+RUN pip install -r requirements.txt
 
-COPY ./entrypoint.sh /usr/src/app/entrypoint.sh
-RUN chmod +x /usr/src/app/entrypoint.sh
+COPY ./entrypoint.sh /command/entrypoint.sh
+RUN chmod +x /command/entrypoint.sh
 
 COPY . .
 
-ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
+ENTRYPOINT ["/command/entrypoint.sh"]
