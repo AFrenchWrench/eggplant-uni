@@ -27,4 +27,4 @@ RUN dos2unix $APP_HOME/entrypoint.sh
 
 COPY . $APP_HOME
 
-ENTRYPOINT ["/home/app/web/entrypoint.sh"]
+ENTRYPOINT /home/app/web/entrypoint.sh
