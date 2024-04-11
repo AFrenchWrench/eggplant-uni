@@ -7,6 +7,7 @@ from django.contrib.auth import (
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
 from django.utils.crypto import get_random_string
+from django.utils.http import urlsafe_base64_decode
 from graphene_django import DjangoObjectType
 from graphene_file_upload.scalars import Upload
 from graphql import (
@@ -362,8 +363,35 @@ class ResetPasswordRequest(graphene.Mutation):
         send = send_email(email, subject, text)
         r = Redis(host='localhost', port=6379, db=0)
         r.set(token, email)
-        r.expire(token, 60 * 2 * 1 ) # 2 minutes
+        r.expire(token, 60 * 2 * 1)  # 2 minutes
         return ResetPasswordRequest(success=send)
+
+
+class ResetPassword(graphene.Mutation):
+    success = graphene.Boolean()
+
+    class Arguments:
+        token = graphene.String(required=True)
+        email = graphene.String(required=True)
+        new_password = graphene.String(required=True)
+
+    @staticmethod
+    def mutate(root, info, token, email, new_password):
+        r = Redis(host='localhost', port=6379, db=0)
+        stored_email = r.get(token)
+        if not stored_email or stored_email.decode('utf-8') != email:
+            raise GraphQLError("Invalid token or email")
+
+        uid = urlsafe_base64_decode(token).decode('utf-8')
+
+        user = get_object_or_404(User, pk=uid)
+
+        user.set_password(new_password)
+        user.save()
+
+        r.delete(token)
+
+        return ResetPassword(success=True)
 
 
 class Mutation(graphene.ObjectType):
@@ -373,6 +401,7 @@ class Mutation(graphene.ObjectType):
     login = Login.Field()
     logout = Logout.Field()
     reset_password_request = ResetPasswordRequest.Field()
+    reset_password = ResetPassword.Field()
 
 
 class StudentFilterInput(graphene.InputObjectType):
