@@ -340,12 +340,30 @@ class Logout(graphene.Mutation):
         return Logout(success=True)
 
 
+class ResetPasswordRequest(graphene.Mutation):
+    success = graphene.Boolean()
+
+    class Arguments:
+        email = graphene.String(required=True)
+
+    @staticmethod
+    def mutate(root, info, email):
+        user = get_object_or_404(User, email=email)
+        subject = "Reset your password"
+        text = f"""
+        Hi {user.username} ...
+               """
+        send_email = send_email(email, subject, text)
+        return ResetPasswordRequest(success=send_email)
+
+
 class Mutation(graphene.ObjectType):
     create_user = CreateUser.Field()
     update_user = UpdateUser.Field()
     delete_user = DeleteUser.Field()
     login = Login.Field()
     logout = Logout.Field()
+    reset_password_request = ResetPasswordRequest.Field()
 
 
 class StudentFilterInput(graphene.InputObjectType):
