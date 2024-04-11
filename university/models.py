@@ -1,6 +1,5 @@
-from datetime import date
-
 from django.db import models
+from django.utils import timezone
 
 
 class Course(models.Model):
@@ -73,10 +72,10 @@ class Semester(models.Model):
     course_addition_drop_end = models.DateTimeField(help_text="Semester Addition Drop End Time")
     last_day_for_emergency_withdrawal = models.DateTimeField(help_text="Last Day For Emergency Withdrawal")
     exam_start_time = models.DateTimeField(help_text="Exam Start Time")
-    semester_end_date = models.DateField(help_text="Semester End Time")
+    semester_end_date = models.DateTimeField(help_text="Semester End Time")
 
     def is_active(self):
-        if self.semester_end_date >= date.today():
+        if self.semester_end_date >= timezone.now():
             self.is_active = True
             return True
         else:

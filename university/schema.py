@@ -15,6 +15,7 @@ from utils.schema_utils import (
     login_required,
     staff_member_required,
 )
+from .forms import SemesterForm, UpdateSemesterForm
 from .models import (
     Course,
     SemesterCourse,
@@ -96,7 +97,7 @@ class CreateSemesterInput(graphene.InputObjectType):
     course_addition_drop_end = graphene.DateTime(required=True)
     last_day_for_emergency_withdrawal = graphene.DateTime(required=True)
     exam_start_time = graphene.DateTime(required=True)
-    semester_end_date = graphene.Date(required=True)
+    semester_end_date = graphene.DateTime(required=True)
 
 
 class CreateSemesterStudentInput(graphene.InputObjectType):
@@ -200,13 +201,14 @@ class CreateSemester(graphene.Mutation):
     @staticmethod
     @staff_member_required
     def mutate(root, info, input):
-        if Semester.objects.filter(Q(course_selection_start_time__gte=input['course_selection_start_time'],
-                                     semester_end_date__lte=input['course_selection_start_time']) |
-                                   Q(course_selection_start_time__gte=input['semester_end_date'],
-                                     semester_end_date__lte=input['semester_end_date'])).distinct().exists():
-            raise GraphQLError("Semester Creation Time Range Exists")
-        semester = Semester.objects.create(**input)
-        return CreateSemester(semester=semester)
+        form = SemesterForm(input)
+        if form.is_valid():
+            semester = Semester.objects.create(**input)
+            return CreateSemester(semester=semester)
+        else:
+            errors = form.errors.as_data()
+            error_messages = [error[0].messages[0] for error in errors.values()]
+            raise GraphQLError(', '.join(error_messages))
 
 
 class CreateSemesterStudent(graphene.Mutation):
@@ -289,7 +291,7 @@ class UpdateSemesterInput(graphene.InputObjectType):
     course_addition_drop_end = graphene.DateTime()
     last_day_for_emergency_withdrawal = graphene.DateTime()
     exam_start_time = graphene.DateTime()
-    semester_end_date = graphene.Date()
+    semester_end_date = graphene.DateTime()
 
 
 class UpdateSemesterStudentInput(graphene.InputObjectType):
@@ -390,11 +392,17 @@ class UpdateSemester(graphene.Mutation):
     @staticmethod
     @staff_member_required
     def mutate(root, info, pk, input):
-        semester = get_object_or_404(Semester, pk=pk)
-        for field, value in input.items():
-            setattr(semester, field, value)
-        semester.save()
-        return UpdateSemester(semester=semester)
+        form = UpdateSemesterForm(input)
+        if form.is_valid():
+            semester = get_object_or_404(Semester, pk=pk)
+            for field, value in input.items():
+                setattr(semester, field, value)
+            semester.save()
+            return UpdateSemester(semester=semester)
+        else:
+            errors = form.errors.as_data()
+            error_messages = [error[0].messages[0] for error in errors.values()]
+            raise GraphQLError(', '.join(error_messages))
 
 
 class UpdateSemesterStudent(graphene.Mutation):
