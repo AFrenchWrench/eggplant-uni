@@ -2,6 +2,8 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import Avg
 
+from university.models import Semester
+
 
 class User(AbstractUser):
     email = models.EmailField(unique=True, help_text='Required. Inform a valid email address.')
@@ -80,13 +82,12 @@ class Professor(models.Model):
                                       "('A1', 'Assistant Professor'), "
                                       "('A2', 'Associate Professor'), ('P', 'Professor')")
 
-    # def students(self):
-    #     students = {k: v
-    #                 for k, v in self.semester_courses.all().}
-    # TODO: finish this function please and use it on filtering course registration request , sorry I'm dying XD
-    # this function should get all of the professors students that are in an active semester course with this professor
-    # this professor could be teaching multiple courses in one semester so mind that
-    # if you see an easier way of doing this feel free I just wanted to give my idea XD
+    def get_active_semester_courses(self):
+        return self.semester_courses.filter(semester=Semester.objects.get(is_active=True))
+
+    def get_active_semester_students(self):
+        return [student for semester_course in self.get_active_semester_courses() for student in
+                semester_course.get_semester_course_students()]
 
 
 class Assistant(models.Model):

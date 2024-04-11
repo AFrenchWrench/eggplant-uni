@@ -42,6 +42,9 @@ class SemesterCourse(models.Model):
     def course_units(self):
         return self.course.units
 
+    def get_semester_course_students(self):
+        return self.student_courses.all().values_list('student', flat=True)
+
 
 class StudentCourse(models.Model):
     student = models.ForeignKey('users.Student', on_delete=models.CASCADE, related_name='courses', null=True,
