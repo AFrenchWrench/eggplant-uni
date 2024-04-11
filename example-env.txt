@@ -7,3 +7,5 @@ DB_HOST =
 DB_PORT =
 CELERY_BROKER_URL =
 CELERY_RESULT_BACKEND =
+
+#Email info: unieggplant@gmail.com  pass:AAaa11!!
