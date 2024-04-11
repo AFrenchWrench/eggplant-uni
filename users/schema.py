@@ -1,16 +1,19 @@
 import graphene
+
 from django.contrib.auth import (
     get_user_model,
     authenticate,
 )
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
+from django.utils.crypto import get_random_string
 from graphene_django import DjangoObjectType
 from graphene_file_upload.scalars import Upload
 from graphql import (
     GraphQLError,
 )
 from graphql_jwt.shortcuts import get_token
+from redis import Redis
 
 from admin_dash.models import BurnedTokens
 from university.models import (
@@ -39,6 +42,7 @@ from utils.schema_utils import (
     login_required,
     staff_member_required,
 )
+from utils.tasks import send_email
 
 User = get_user_model()
 
@@ -350,11 +354,16 @@ class ResetPasswordRequest(graphene.Mutation):
     def mutate(root, info, email):
         user = get_object_or_404(User, email=email)
         subject = "Reset your password"
+        token = get_random_string(length=32)
+
         text = f"""
-        Hi {user.username} ...
+        Hi {user.get_full_name} ... \n Your token is {token}
                """
-        send_email = send_email(email, subject, text)
-        return ResetPasswordRequest(success=send_email)
+        send = send_email(email, subject, text)
+        r = Redis(host='localhost', port=6379, db=0)
+        r.set(token, email)
+        r.expire(token, 60 * 2 * 1 ) # 2 minutes
+        return ResetPasswordRequest(success=send)
 
 
 class Mutation(graphene.ObjectType):

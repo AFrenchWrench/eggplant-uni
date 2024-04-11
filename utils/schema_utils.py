@@ -79,8 +79,5 @@ def staff_member_required(func):
     return wrapper
 
 
-def send_email(to, subject, text):
-
-
 if __name__ == '__main__':
     main()
