@@ -16,12 +16,6 @@ class Course(models.Model):
                             help_text="Course Type ('G', 'General'), ('M', 'Major'), "
                                       "('F', 'Foundation'), ('E', 'Elective')")
 
-    def get_all_prerequisites(self):
-        prerequisites = list(self.prerequisites.all())
-        for prerequisite in self.prerequisites.all():
-            prerequisites.extend(prerequisite.get_all_prerequisites())
-        return prerequisites
-
 
 class SemesterCourse(models.Model):
     course = models.ForeignKey('Course', on_delete=models.CASCADE, related_name='semester_courses',
@@ -43,6 +37,10 @@ class SemesterCourse(models.Model):
 
     def get_semester_course_students(self):
         return self.student_courses.all().values_list('student', flat=True)
+
+    def check_all_prerequisites(self):
+        prerequisites = self.course.prerequisites
+        prerequisites = []
 
 
 class StudentCourse(models.Model):

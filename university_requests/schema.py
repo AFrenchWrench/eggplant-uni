@@ -1,4 +1,6 @@
 import graphene
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from graphene_django.types import DjangoObjectType
@@ -13,7 +15,7 @@ from university.models import (
 from users.models import Student, Professor
 from utils.schema_utils import (
     resolve_model_with_filters,
-    login_required,
+    login_required, staff_or_assistant,
 )
 from .models import (
     CourseRegistrationRequest,
@@ -145,7 +147,8 @@ class CreateCourseRegistrationRequest(graphene.Mutation):
                 raise GraphQLError("At Least Capacity of One of the Courses is Zero ")
 
             # Units Count Check
-            if sum([semester_course.course_units() for semester_course in semester_courses]) >= student.get_max_courses_unit():
+            if sum([semester_course.course_units() for semester_course in
+                    semester_courses]) >= student.get_max_courses_unit():
                 raise GraphQLError("Courses Units Count is Bigger than Max Allowed Units")
 
             #
@@ -716,8 +719,30 @@ class Query(graphene.ObjectType):
         return get_object_or_404(ReconsiderationRequest, pk=pk)
 
     @staticmethod
+    @login_required
     def resolve_emergency_withdrawal_request(self, info, pk):
-        return get_object_or_404(EmergencyWithdrawalRequest, pk=pk)
+        user = info.context.user
+        request = get_object_or_404(EmergencyWithdrawalRequest, pk=pk)
+        if staff_or_assistant(user):
+            try:
+                faculty = request.student.major.faculty
+                assistant = user.assistant
+                if faculty == assistant.faculty:
+                    return request
+                else:
+                    raise GraphQLError("You can only access the requests from your own faculty")
+            except ObjectDoesNotExist:
+                return request
+        else:
+            try:
+                student = user.student
+            except ObjectDoesNotExist:
+                raise GraphQLError("You are not a Student")
+
+            if request.student == student:
+                return request
+            else:
+                raise GraphQLError("This request is not yours")
 
     @staticmethod
     def resolve_semester_withdrawal_request(self, info, pk):
