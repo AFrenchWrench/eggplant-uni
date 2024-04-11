@@ -46,6 +46,27 @@ class Student(models.Model):
     def get_current_semester_courses(self):
         return [course for course in self.courses.all() if course.course.semester.is_active()]
 
+    def check_course_passed_or_failed(self, semester_course):
+        if semester_course.course in self.get_passed_courses():
+            return True
+        else:
+            return False
+
+    def get_gpa_of_last_semester(self):
+        return \
+            self.courses.filter(course__semester=self.semester_students.get(is_active=True).semester).aggregate(
+                average_grade=Avg('grade'))[
+                'average_grade']
+
+    def get_max_courses_unit(self):
+        gpa_of_last_semester = self.get_gpa_of_last_semester()
+        if gpa_of_last_semester > 17:
+            return 24
+        elif gpa_of_last_semester < 12:
+            return 12
+        else:
+            return 20
+
 
 class Professor(models.Model):
     user = models.OneToOneField('User', on_delete=models.CASCADE, related_name='professor',

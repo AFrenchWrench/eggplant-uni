@@ -1,4 +1,5 @@
 import graphene
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from graphene_django import DjangoObjectType
@@ -116,11 +117,6 @@ class CreateMajorInput(graphene.InputObjectType):
     degree_level = graphene.String(required=True)
 
 
-# TODO : if you were in the mood please add some logic to any mutation that you see fit for example
-#  if we want to create a semester we have to check for it not to overlap with other semesters
-#  and I saw something about overlapping semester courses so I guess the field day and time should be added for
-#  semester course TY XD
-
 class CreateCourse(graphene.Mutation):
     class Arguments:
         input = CreateCourseInput(required=True)
@@ -204,8 +200,12 @@ class CreateSemester(graphene.Mutation):
     @staticmethod
     @staff_member_required
     def mutate(root, info, input):
-        semester = input
-        semester = Semester.objects.create(**semester)
+        if Semester.objects.filter(Q(course_selection_start_time__gte=input['course_selection_start_time'],
+                                     semester_end_date__lte=input['course_selection_start_time']) |
+                                   Q(course_selection_start_time__gte=input['semester_end_date'],
+                                     semester_end_date__lte=input['semester_end_date'])).distinct().exists():
+            raise GraphQLError("Semester Creation Time Range Exists")
+        semester = Semester.objects.create(**input)
         return CreateSemester(semester=semester)
 
 

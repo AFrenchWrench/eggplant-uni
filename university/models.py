@@ -1,4 +1,5 @@
 from datetime import date
+
 from django.db import models
 
 
@@ -16,6 +17,12 @@ class Course(models.Model):
                             help_text="Course Type ('G', 'General'), ('M', 'Major'), "
                                       "('F', 'Foundation'), ('E', 'Elective')")
 
+    def get_all_prerequisites(self):
+        prerequisites = list(self.prerequisites.all())
+        for prerequisite in self.prerequisites.all():
+            prerequisites.extend(prerequisite.get_all_prerequisites())
+        return prerequisites
+
 
 class SemesterCourse(models.Model):
     course = models.ForeignKey('Course', on_delete=models.CASCADE, related_name='semester_courses',
@@ -28,6 +35,12 @@ class SemesterCourse(models.Model):
     professor = models.ForeignKey('users.Professor', on_delete=models.CASCADE, related_name='semester_courses',
                                   help_text="Semester Course To professor Relation")
     capacity = models.PositiveIntegerField(help_text="Course Capacity")
+
+    def get_capacity_count(self):
+        return self.capacity - self.student_courses.count()
+
+    def course_units(self):
+        return self.course.units
 
 
 class StudentCourse(models.Model):

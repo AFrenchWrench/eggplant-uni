@@ -1,7 +1,7 @@
 import graphene
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from graphene_django.types import DjangoObjectType
-from django.shortcuts import get_object_or_404
 from graphene_file_upload.scalars import Upload
 from graphql import GraphQLError
 
@@ -11,6 +11,10 @@ from university.models import (
     Faculty,
 )
 from users.models import Student, Professor
+from utils.schema_utils import (
+    resolve_model_with_filters,
+    login_required,
+)
 from .models import (
     CourseRegistrationRequest,
     StudentCourseParticipant,
@@ -19,11 +23,6 @@ from .models import (
     EmergencyWithdrawalRequest,
     SemesterWithdrawalRequest,
     DefermentRequest,
-)
-from utils.schema_utils import (
-    resolve_model_with_filters,
-    login_required,
-    staff_member_required,
 )
 
 
@@ -112,21 +111,46 @@ class CreateCourseRegistrationRequest(graphene.Mutation):
             user = info.context.user
             student = user.student
             student = get_object_or_404(Student, pk=student.id)
-            courses = [get_object_or_404(SemesterCourse, pk=course_id) for course_id in input['courses']]
+            semester_courses = [get_object_or_404(SemesterCourse, pk=course_id) for course_id in input['courses']]
 
             # TODO : create a form to validate the selected courses based on document
-            # درس ͖یشنیاز حتما باید در وضعیت قبول باشد
-            # درس تکراری یا پاس شده نمیتوان برداشت
-            # درس تکمیل را نمیتوان اخذ کرد
-            # درس همنیاز را نمیتوان زودتر از درسی که همنیاز آن شده حذف کرد
-            # در صورت معدل ترم ͖یش بالای  ۱۷دانشجو حق دارد  ۲۴واحد اخذ کند و در غیر این صورت  ۲۰واحد در یک
-            # انتخاب واحد می تواند اخذ کند
+            # درس ͖یشنیاز حتما باید در وضعیت قبول باشد -- Done
+            # درس تکراری یا پاس شده نمیتوان برداشت -- Done
+            # درس تکمیل را نمیتوان اخذ کرد -- Done
+            # درس همنیاز را نمیتوان زودتر از درسی که همنیاز آن شده حذف کرد -- HELP!!
+            # در صورت معدل ترم ͖یش بالای  ۱۷دانشجو حق دارد  ۲۴واحد اخذ کند و در غیر این صورت  ۲۰واحد در یک -- Done
+            # انتخاب واحد می تواند اخذ کند -- Done
             # تداخل زمانی در امتحان و کلاس نباید وجود داشته باشد
             # دانشجو در صورت داشتن سنوات میتواند انتخاب واحد کند
             # تنها دروس مرتبط به رشته را میتوان برداشت
             # و هر خطایی که بنظر شما منطقی میباشد باید ͖یادهسازی شود
 
-            course_registration_request = CourseRegistrationRequest.objects.create(student=student, courses=courses)
+            # Prerequisites Check
+            if not all(map(student.check_course_passed_or_failed,
+                           [prerequisite for semester_course in
+                            semester_courses for prerequisite in semester_course.course.get_all_prerequisites()])):
+                raise GraphQLError("At Least One of the Prerequisites Not Passed")
+
+            # Duplicate Semester Course Check
+            if len(semester_courses) != len(set(semester_courses)):
+                raise GraphQLError("Duplicate Course Found!")
+
+            # Passed Course Check
+            for semester_course in semester_courses:
+                if semester_course in student.get_passed_courses:
+                    raise GraphQLError("You Passed At Least One of the Course")
+
+            # Semester Course Capacity Check (Without Redis)
+            if not all([semester_course.get_capacity_count() for semester_course in semester_courses]):
+                raise GraphQLError("At Least Capacity of One of the Courses is Zero ")
+
+            # Units Count Check
+            if sum([semester_course.course_units() for semester_course in semester_courses]) >= student.get_max_courses_unit():
+                raise GraphQLError("Courses Units Count is Bigger than Max Allowed Units")
+
+            #
+            course_registration_request = CourseRegistrationRequest.objects.create(student=student,
+                                                                                   courses=semester_courses)
 
             return CreateCourseRegistrationRequest(course_registration_request=course_registration_request)
         except Student.DoesNotExist:
