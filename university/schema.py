@@ -1,4 +1,5 @@
 import graphene
+from django.core.cache import cache
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from graphene_django import DjangoObjectType
@@ -651,66 +652,164 @@ class Query(graphene.ObjectType):
 
     @login_required
     def resolve_courses(self, info, filters=None):
-        return resolve_model_with_filters(Course, filters)
+        cache_key = f"graphql:{info.operation.name}:{filters}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
+        result = resolve_model_with_filters(Course, filters)
+        cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+        return result
 
     @login_required
     def resolve_semester_courses(self, info, filters=None):
-        return resolve_model_with_filters(SemesterCourse, filters)
+        cache_key = f"graphql:{info.operation.name}:{filters}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
+        result = resolve_model_with_filters(SemesterCourse, filters)
+        cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+        return result
 
     @staff_member_required
     def resolve_student_courses(self, info, filters=None):
-        return resolve_model_with_filters(StudentCourse, filters)
+        cache_key = f"graphql:{info.operation.name}:{filters}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
+        result = resolve_model_with_filters(StudentCourse, filters)
+        cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+        return result
 
     @login_required
     def resolve_semesters(self, info, filters=None):
-        return resolve_model_with_filters(Semester, filters)
+        cache_key = f"graphql:{info.operation.name}:{filters}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
+        result = resolve_model_with_filters(Semester, filters)
+        cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+        return result
 
     @staff_member_required
     def resolve_semester_students(self, info, filters=None):
-        return resolve_model_with_filters(SemesterStudent, filters)
+        cache_key = f"graphql:{info.operation.name}:{filters}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
+        result = resolve_model_with_filters(SemesterStudent, filters)
+        cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+        return result
 
     @staff_member_required
     def resolve_faculties(self, info, filters=None):
-        return resolve_model_with_filters(Faculty, filters)
+        cache_key = f"graphql:{info.operation.name}:{filters}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
+        result = resolve_model_with_filters(Faculty, filters)
+        cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+        return result
 
     @staff_member_required
     def resolve_majors(self, info, filters=None):
-        return resolve_model_with_filters(Major, filters)
+        cache_key = f"graphql:{info.operation.name}:{filters}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
+        result = resolve_model_with_filters(Major, filters)
+        cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+        return result
 
     @staticmethod
     @login_required
     def resolve_course(root, info, pk):
-        return get_object_or_404(Course, pk=pk)
+        cache_key = f"graphql:{info.operation.name}:{pk}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
+        result = get_object_or_404(Course, pk=pk)
+        cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+        return result
 
     @staticmethod
     @login_required
     def resolve_semester_course(root, info, pk):
-        return get_object_or_404(SemesterCourse, pk=pk)
+        cache_key = f"graphql:{info.operation.name}:{pk}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
+        result = get_object_or_404(SemesterCourse, pk=pk)
+        cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+        return result
 
     @staticmethod
     @staff_member_required
     def resolve_student_course(root, info, pk):
-        return get_object_or_404(StudentCourse, pk=pk)
+        cache_key = f"graphql:{info.operation.name}:{pk}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
+        result = get_object_or_404(StudentCourse, pk=pk)
+        cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+        return result
 
     @staticmethod
     @login_required
     def resolve_semester(root, info, pk):
-        return get_object_or_404(Semester, pk=pk)
+        cache_key = f"graphql:{info.operation.name}:{pk}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
+        result = get_object_or_404(Semester, pk=pk)
+        cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+        return result
 
     @staticmethod
     @staff_member_required
     def resolve_semester_student(root, info, pk):
-        return get_object_or_404(SemesterStudent, pk=pk)
+        cache_key = f"graphql:{info.operation.name}:{pk}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
+        result = get_object_or_404(SemesterStudent, pk=pk)
+        cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+        return result
 
     @staticmethod
     @staff_member_required
     def resolve_faculty(root, info, pk):
-        return get_object_or_404(Faculty, pk=pk)
+        cache_key = f"graphql:{info.operation.name}:{pk}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
+        result = get_object_or_404(Faculty, pk=pk)
+        cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+        return result
 
     @staticmethod
     @staff_member_required
     def resolve_major(root, info, pk):
-        return get_object_or_404(Major, pk=pk)
+        cache_key = f"graphql:{info.operation.name}:{pk}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
+        result = get_object_or_404(Major, pk=pk)
+        cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+        return result
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

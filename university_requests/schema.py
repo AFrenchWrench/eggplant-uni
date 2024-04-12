@@ -1,4 +1,5 @@
 import graphene
+from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -784,6 +785,11 @@ class Query(graphene.ObjectType):
 
     @login_required
     def resolve_course_registration_requests(self, info, filters=None):
+        cache_key = f"graphql:{info.operation.name}:{filters}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
         user = info.context.user
         try:
             student = user.student
@@ -860,6 +866,11 @@ class Query(graphene.ObjectType):
 
     @login_required
     def resolve_emergency_withdrawal_requests(self, info, filters=None):
+        cache_key = f"graphql:{info.operation.name}:{filters}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
         user = info.context.user
         if staff_or_assistant(user):
             filters = filters or {}
@@ -867,11 +878,11 @@ class Query(graphene.ObjectType):
             try:
                 filters['student__major__faculty'] = user.assistant.faculty.id
                 request = resolve_model_with_filters(EmergencyWithdrawalRequest, filters)
-                return request
-
             except ObjectDoesNotExist:
                 request = resolve_model_with_filters(EmergencyWithdrawalRequest, filters)
-                return request
+
+            cache.set(cache_key, request, timeout=60 * 15)  # Cache for 15 minutes
+            return request
         else:
             raise GraphQLError("You Don't have access to this information")
 
@@ -1010,6 +1021,11 @@ class Query(graphene.ObjectType):
     @staticmethod
     @login_required
     def resolve_emergency_withdrawal_request(self, info, pk):
+        cache_key = f"graphql:{info.operation.name}:{pk}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
         user = info.context.user
         request = get_object_or_404(EmergencyWithdrawalRequest, pk=pk)
         if staff_or_assistant(user):
@@ -1017,10 +1033,12 @@ class Query(graphene.ObjectType):
                 faculty = request.student.major.faculty
                 assistant = user.assistant
                 if faculty == assistant.faculty:
+                    cache.set(cache_key, request, timeout=60 * 15)  # Cache for 15 minutes
                     return request
                 else:
                     raise GraphQLError("You can only access the requests from your own faculty")
             except ObjectDoesNotExist:
+                cache.set(cache_key, request, timeout=60 * 15)  # Cache for 15 minutes
                 return request
         else:
             try:
@@ -1029,6 +1047,7 @@ class Query(graphene.ObjectType):
                 raise GraphQLError("You are not a Student")
 
             if request.student == student:
+                cache.set(cache_key, request, timeout=60 * 15)  # Cache for 15 minutes
                 return request
             else:
                 raise GraphQLError("This request is not yours")
