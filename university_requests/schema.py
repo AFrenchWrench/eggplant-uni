@@ -402,6 +402,7 @@ class UpdateCourseCorrectionRequest(graphene.Mutation):
         for field, value in input.items():
             if field == 'student':
                 value = get_object_or_404(Student, pk=value)
+                course_correction_request.student = value
             elif field in ['dropped_courses', 'added_courses']:
                 value = [get_object_or_404(SemesterCourse, pk=pk) for pk in value]
                 # Get All Current Courses of Student
@@ -411,15 +412,15 @@ class UpdateCourseCorrectionRequest(graphene.Mutation):
                     # Remove Unwanted Courses
                     for drop in value:
                         updated_semester_courses.remove(drop)
+                    course_correction_request.dropped_courses.set(value)
                 elif field == 'added_courses':
                     # Add Wanted Courses
                     for add in value:
                         updated_semester_courses.append(add)
+                    course_correction_request.added_courses.set(value)
 
                 # Check Updated Semester Courses
                 check_student_courses_conditions(course_correction_request.student, updated_semester_courses)
-
-            setattr(course_correction_request, field, value)
 
         course_correction_request.save()
         return UpdateCourseCorrectionRequest(course_correction_request=course_correction_request)
