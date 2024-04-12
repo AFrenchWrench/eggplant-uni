@@ -15,6 +15,7 @@ from utils.schema_utils import (
     resolve_model_with_filters,
     login_required, staff_or_assistant,
 )
+from utils.tasks import send_email
 from .models import (
     CourseRegistrationRequest,
     StudentCourseParticipant,
@@ -32,14 +33,12 @@ def check_student_courses_conditions(student, semester_courses):
                    [prerequisite for semester_course in
                     semester_courses for prerequisite in semester_course.course.get_all_prerequisites()])):
         raise GraphQLError("At Least One of the Prerequisites Not Passed")
-
     # Duplicate Semester Course Check
     if len(semester_courses) != len(set(semester_courses)):
         raise GraphQLError("Duplicate Course Found!")
-
     # Passed Course Check
     for semester_course in semester_courses:
-        if semester_course in student.get_passed_courses:
+        if semester_course in student.get_passed_courses():
             raise GraphQLError("You Passed At Least One of the Course")
 
     # Semester Course Capacity Check (Without Redis)
@@ -151,15 +150,16 @@ class CreateCourseRegistrationRequest(graphene.Mutation):
         semester = [semester for semester in Semester.objects.all() if semester.is_active()][0]
         if semester.course_selection_end_time < timezone.now():
             raise GraphQLError("The Course Selection Time is Over")
+        elif semester.course_selection_start_time > timezone.now():
+            raise GraphQLError("The Course Selection hasn't been Started")
         try:
             user = info.context.user
             student = get_object_or_404(Student, pk=user.student.id)
             semester_courses = [get_object_or_404(SemesterCourse, pk=course_id) for course_id in input['courses']]
 
             check_student_courses_conditions(student, semester_courses)
-            course_registration_request = CourseRegistrationRequest.objects.create(student=student,
-                                                                                   courses=semester_courses)
-
+            course_registration_request = CourseRegistrationRequest.objects.create(student=student)
+            course_registration_request.courses.set(semester_courses)
             return CreateCourseRegistrationRequest(course_registration_request=course_registration_request)
         except Student.DoesNotExist:
             raise GraphQLError("You have to be a Student to create this request")
@@ -193,15 +193,29 @@ class CreateCourseCorrectionRequest(graphene.Mutation):
     def mutate(self, info, input):
         semester = [semester for semester in Semester.objects.all() if semester.is_active()][0]
         if semester.course_addition_drop_end < timezone.now():
-            raise GraphQLError("The Course addition/drop Time is Over")
+            raise GraphQLError("The Course Addition/Drop Time is Over")
+        elif semester.course_addition_drop_start > timezone.now():
+            raise GraphQLError("The Course Addition/Drop Time hasn't been Started")
         try:
             student = info.context.user.student
             dropped_courses = [get_object_or_404(SemesterCourse, pk=course_id) for course_id in
                                input['dropped_courses']]
             added_courses = [get_object_or_404(SemesterCourse, pk=course_id) for course_id in input['added_courses']]
 
-            # TODO: Check It's Correct Or Not Please
-            check_student_courses_conditions(student, added_courses)
+            # Get All Current Courses of Student
+            student_semester_courses = student.get_current_semester_courses()
+            updated_semester_courses = student_semester_courses
+
+            # Remove Unwanted Courses
+            for drop in dropped_courses:
+                updated_semester_courses.remove(drop)
+
+            # Add Wanted Courses
+            for add in added_courses:
+                updated_semester_courses.append(add)
+
+            # Check Updated Semester Courses
+            check_student_courses_conditions(student, updated_semester_courses)
 
             course_correction_request = CourseCorrectionRequest.objects.create(student=student)
             course_correction_request.dropped_courses.set(dropped_courses)
@@ -236,13 +250,18 @@ class CreateEmergencyWithdrawalRequest(graphene.Mutation):
     emergency_withdrawal_request = graphene.Field(EmergencyWithdrawalRequestType)
 
     @staticmethod
+    @login_required
     def mutate(self, info, input):
-        student = get_object_or_404(Student, pk=input['student'])
+        user = info.context.user
         course = get_object_or_404(SemesterCourse, pk=input['course'])
+
+        try:
+            student = user.student
+        except ObjectDoesNotExist:
+            raise GraphQLError("You are not a Student")
 
         emergency_withdrawal_request = EmergencyWithdrawalRequest.objects.create(student=student, course=course,
                                                                                  text=input['text'])
-
         return CreateEmergencyWithdrawalRequest(emergency_withdrawal_request=emergency_withdrawal_request)
 
 
@@ -309,7 +328,6 @@ class UpdateReconsiderationRequestInput(graphene.InputObjectType):
 
 
 class UpdateEmergencyWithdrawalRequestInput(graphene.InputObjectType):
-    student = graphene.ID()
     course = graphene.ID()
     text = graphene.String()
     response = graphene.String()
@@ -344,9 +362,11 @@ class UpdateCourseRegistrationRequest(graphene.Mutation):
         for field, value in input.items():
             if field == 'student':
                 value = get_object_or_404(Student, pk=value)
+                course_registration_request.student = value
             elif field == 'courses':
                 value = [get_object_or_404(SemesterCourse, pk=pk) for pk in value]
-            setattr(course_registration_request, field, value)
+                check_student_courses_conditions(course_registration_request.student, value)
+                course_registration_request.courses.set(value)
         course_registration_request.save()
         return UpdateCourseRegistrationRequest(course_registration_request=course_registration_request)
 
@@ -384,9 +404,26 @@ class UpdateCourseCorrectionRequest(graphene.Mutation):
         for field, value in input.items():
             if field == 'student':
                 value = get_object_or_404(Student, pk=value)
+                course_correction_request.student = value
             elif field in ['dropped_courses', 'added_courses']:
                 value = [get_object_or_404(SemesterCourse, pk=pk) for pk in value]
-            setattr(course_correction_request, field, value)
+                # Get All Current Courses of Student
+                student_semester_courses = course_correction_request.student.get_current_semester_courses()
+                updated_semester_courses = student_semester_courses
+                if field == 'dropped_courses':
+                    # Remove Unwanted Courses
+                    for drop in value:
+                        updated_semester_courses.remove(drop)
+                    course_correction_request.dropped_courses.set(value)
+                elif field == 'added_courses':
+                    # Add Wanted Courses
+                    for add in value:
+                        updated_semester_courses.append(add)
+                    course_correction_request.added_courses.set(value)
+
+                # Check Updated Semester Courses
+                check_student_courses_conditions(course_correction_request.student, updated_semester_courses)
+
         course_correction_request.save()
         return UpdateCourseCorrectionRequest(course_correction_request=course_correction_request)
 
@@ -419,16 +456,50 @@ class UpdateEmergencyWithdrawalRequest(graphene.Mutation):
     emergency_withdrawal_request = graphene.Field(EmergencyWithdrawalRequestType)
 
     @staticmethod
+    @login_required
     def mutate(root, info, pk, input):
         emergency_withdrawal_request = get_object_or_404(EmergencyWithdrawalRequest, pk=pk)
-        for field, value in input.items():
-            if field == 'student':
-                value = get_object_or_404(Student, pk=value)
-            elif field == 'course':
-                value = get_object_or_404(SemesterCourse, pk=value)
-            setattr(emergency_withdrawal_request, field, value)
-        emergency_withdrawal_request.save()
-        return UpdateEmergencyWithdrawalRequest(emergency_withdrawal_request=emergency_withdrawal_request)
+
+        user = info.context.user
+        student = emergency_withdrawal_request.student.user
+        if staff_or_assistant(user):
+            if input.get('course') or input.get('text'):
+                raise GraphQLError("You are not access to modify text and course")
+
+            if not input.get('response') or not input.get('status'):
+                raise GraphQLError("You should have to send response and status")
+
+            for field, value in input.items():
+                setattr(emergency_withdrawal_request, field, value)
+            emergency_withdrawal_request.save()
+
+            subject = 'Emergency withdrawal request'
+            text = f'''
+                Hi {student.get_full_name()}
+                
+                Your Request to withdraw {emergency_withdrawal_request.course.course.name}
+                has been {emergency_withdrawal_request.status}
+            '''
+            send_email.delay(student.email, subject, text)
+            return UpdateEmergencyWithdrawalRequest(emergency_withdrawal_request=emergency_withdrawal_request)
+        else:
+            try:
+                student = user.student
+            except ObjectDoesNotExist:
+                raise GraphQLError("You are not a Student")
+
+            if emergency_withdrawal_request.student == student:
+                if input.get('response') or input.get('status'):
+                    raise GraphQLError("You are not access to modify status and response")
+
+                for field, value in input.items():
+                    if field == 'course':
+                        value = get_object_or_404(SemesterCourse, pk=value)
+                    setattr(emergency_withdrawal_request, field, value)
+                emergency_withdrawal_request.save()
+                return UpdateEmergencyWithdrawalRequest(emergency_withdrawal_request=emergency_withdrawal_request)
+            else:
+                raise GraphQLError("This request is not yours")
 
 
 class UpdateSemesterWithdrawalRequest(graphene.Mutation):
@@ -696,7 +767,20 @@ class Query(graphene.ObjectType):
 
     @login_required
     def resolve_emergency_withdrawal_requests(self, info, filters=None):
-        return resolve_model_with_filters(EmergencyWithdrawalRequest, filters)
+        user = info.context.user
+        if staff_or_assistant(user):
+            filters = filters or {}
+
+            try:
+                filters['student__major__faculty'] = user.assistant.faculty.id
+                request = resolve_model_with_filters(EmergencyWithdrawalRequest, filters)
+                return request
+
+            except ObjectDoesNotExist:
+                request = resolve_model_with_filters(EmergencyWithdrawalRequest, filters)
+                return request
+        else:
+            raise GraphQLError("You are not access to this request!!")
 
     @login_required
     def resolve_semester_withdrawal_requests(self, info, filters=None):

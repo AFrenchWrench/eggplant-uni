@@ -51,8 +51,8 @@ class Student(models.Model):
     def get_current_semester_courses(self):
         return [course for course in self.courses.all() if course.course.semester.is_active()]
 
-    def check_course_passed_or_failed(self, semester_course):
-        if semester_course.course in self.get_passed_courses():
+    def check_course_passed_or_failed(self, course):
+        if course in self.get_passed_courses():
             return True
         else:
             return False
