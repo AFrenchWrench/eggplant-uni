@@ -382,7 +382,7 @@ class ResetPassword(graphene.Mutation):
             raise GraphQLError("Invalid token or email")
         user = get_object_or_404(User, email=email)
 
-        form = UserForm(password=new_password)
+        form = UpdateUserForm({'password': new_password})
         if form.is_valid():
             user.set_password(new_password)
             user.save()

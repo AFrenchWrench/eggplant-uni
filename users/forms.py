@@ -28,7 +28,8 @@ class UserForm(ModelForm):
 
     class Meta:
         model = User
-        fields = ['username', 'password', 'email', 'first_name', 'last_name', 'phone_number', 'national_id', 'gender', 'birth_date',
+        fields = ['username', 'password', 'email', 'first_name', 'last_name',
+                  'phone_number', 'national_id', 'gender', 'birth_date',
                   'user_code']
 
     def clean_username(self):
