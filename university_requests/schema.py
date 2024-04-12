@@ -16,6 +16,7 @@ from utils.schema_utils import (
     resolve_model_with_filters,
     login_required, staff_or_assistant,
 )
+from utils.tasks import send_email
 from .models import (
     CourseRegistrationRequest,
     StudentCourseParticipant,
@@ -251,13 +252,18 @@ class CreateEmergencyWithdrawalRequest(graphene.Mutation):
     emergency_withdrawal_request = graphene.Field(EmergencyWithdrawalRequestType)
 
     @staticmethod
+    @login_required
     def mutate(self, info, input):
-        student = get_object_or_404(Student, pk=input['student'])
+        user = info.context.user
         course = get_object_or_404(SemesterCourse, pk=input['course'])
+
+        try:
+            student = user.student
+        except ObjectDoesNotExist:
+            raise GraphQLError("You are not a Student")
 
         emergency_withdrawal_request = EmergencyWithdrawalRequest.objects.create(student=student, course=course,
                                                                                  text=input['text'])
-
         return CreateEmergencyWithdrawalRequest(emergency_withdrawal_request=emergency_withdrawal_request)
 
 
@@ -324,7 +330,6 @@ class UpdateReconsiderationRequestInput(graphene.InputObjectType):
 
 
 class UpdateEmergencyWithdrawalRequestInput(graphene.InputObjectType):
-    student = graphene.ID()
     course = graphene.ID()
     text = graphene.String()
     response = graphene.String()
@@ -454,16 +459,50 @@ class UpdateEmergencyWithdrawalRequest(graphene.Mutation):
     emergency_withdrawal_request = graphene.Field(EmergencyWithdrawalRequestType)
 
     @staticmethod
+    @login_required
     def mutate(root, info, pk, input):
         emergency_withdrawal_request = get_object_or_404(EmergencyWithdrawalRequest, pk=pk)
-        for field, value in input.items():
-            if field == 'student':
-                value = get_object_or_404(Student, pk=value)
-            elif field == 'course':
-                value = get_object_or_404(SemesterCourse, pk=value)
-            setattr(emergency_withdrawal_request, field, value)
-        emergency_withdrawal_request.save()
-        return UpdateEmergencyWithdrawalRequest(emergency_withdrawal_request=emergency_withdrawal_request)
+
+        user = info.context.user
+        student = emergency_withdrawal_request.student.user
+        if staff_or_assistant(user):
+            if input.get('course') or input.get('text'):
+                raise GraphQLError("You are not access to modify text and course")
+
+            if not input.get('response') or not input.get('status'):
+                raise GraphQLError("You should have to send response and status")
+
+            for field, value in input.items():
+                setattr(emergency_withdrawal_request, field, value)
+            emergency_withdrawal_request.save()
+
+            subject = 'Emergency withdrawal request'
+            text = f'''
+                Hi {student.get_full_name()}
+                
+                Your Request to withdraw {emergency_withdrawal_request.course.course.name}
+                has been {emergency_withdrawal_request.status}
+            '''
+            send_email.delay(student.email, subject, text)
+            return UpdateEmergencyWithdrawalRequest(emergency_withdrawal_request=emergency_withdrawal_request)
+        else:
+            try:
+                student = user.student
+            except ObjectDoesNotExist:
+                raise GraphQLError("You are not a Student")
+
+            if emergency_withdrawal_request.student == student:
+                if input.get('response') or input.get('status'):
+                    raise GraphQLError("You are not access to modify status and response")
+
+                for field, value in input.items():
+                    if field == 'course':
+                        value = get_object_or_404(SemesterCourse, pk=value)
+                    setattr(emergency_withdrawal_request, field, value)
+                emergency_withdrawal_request.save()
+                return UpdateEmergencyWithdrawalRequest(emergency_withdrawal_request=emergency_withdrawal_request)
+            else:
+                raise GraphQLError("This request is not yours")
 
 
 class UpdateSemesterWithdrawalRequest(graphene.Mutation):
@@ -731,7 +770,20 @@ class Query(graphene.ObjectType):
 
     @login_required
     def resolve_emergency_withdrawal_requests(self, info, filters=None):
-        return resolve_model_with_filters(EmergencyWithdrawalRequest, filters)
+        user = info.context.user
+        if staff_or_assistant(user):
+            filters = filters or {}
+
+            try:
+                filters['student__major__faculty'] = user.assistant.faculty.id
+                request = resolve_model_with_filters(EmergencyWithdrawalRequest, filters)
+                return request
+
+            except ObjectDoesNotExist:
+                request = resolve_model_with_filters(EmergencyWithdrawalRequest, filters)
+                return request
+        else:
+            raise GraphQLError("You are not access to this request!!")
 
     @login_required
     def resolve_semester_withdrawal_requests(self, info, filters=None):
