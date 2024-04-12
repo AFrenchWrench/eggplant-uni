@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_celery_beat',
+    'django-redis',
     # Apps
     'users',
     'admin_dash',
@@ -136,3 +137,14 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'unieggplant@gmail.com'
 EMAIL_HOST_PASSWORD = 'kzvwhimpnnsxfmlx'
 DEFAULT_FROM_EMAIL = 'Celery Testing | EggplantUni'
+
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/2",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}

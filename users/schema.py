@@ -1,13 +1,12 @@
 import graphene
-
 from django.contrib.auth import (
     get_user_model,
     authenticate,
 )
+from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
 from django.utils.crypto import get_random_string
-from django.utils.http import urlsafe_base64_decode
 from graphene_django import DjangoObjectType
 from graphql import (
     GraphQLError,
@@ -24,6 +23,14 @@ from university.models import (
 from university.schema import (
     StudentCourseType,
 )
+from utils.schema_utils import (
+    resolve_model_with_filters,
+    staff_or_assistant,
+    staff_or_same_faculty_assistant,
+    login_required,
+    staff_member_required,
+)
+from utils.tasks import send_email
 from .forms import (
     UserForm,
     UpdateUserForm,
@@ -35,14 +42,6 @@ from .models import (
     Professor,
     Assistant,
 )
-from utils.schema_utils import (
-    resolve_model_with_filters,
-    staff_or_assistant,
-    staff_or_same_faculty_assistant,
-    login_required,
-    staff_member_required,
-)
-from utils.tasks import send_email
 
 User = get_user_model()
 
@@ -456,6 +455,11 @@ class Query(graphene.ObjectType):
     @staticmethod
     @login_required
     def resolve_student(root, info, pk=None):
+        cache_key = f"graphql:{info.operation.name}:{pk}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
         sender = info.context.user
         if staff_or_assistant(sender):
             student = get_object_or_404(Student, pk=pk)
@@ -467,18 +471,22 @@ class Query(graphene.ObjectType):
                     raise GraphQLError("This student is not in your faculty")
             except ObjectDoesNotExist:
                 pass
-            return student
         else:
             try:
                 student = sender.student
             except ObjectDoesNotExist:
                 raise GraphQLError("You are not a student")
-
-            return student
+        cache.set(cache_key, student, timeout=60 * 15)  # Cache for 15 minutes
+        return student
 
     @staticmethod
     @login_required
     def resolve_professor(root, info, pk=None):
+        cache_key = f"graphql:{info.operation.name}:{pk}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
         sender = info.context.user
         if staff_or_assistant(sender):
             professor = get_object_or_404(Professor, pk=pk)
@@ -490,14 +498,14 @@ class Query(graphene.ObjectType):
                     raise GraphQLError("This professor is not in your faculty")
             except ObjectDoesNotExist:
                 pass
-            return professor
         else:
             try:
                 professor = sender.professor
             except ObjectDoesNotExist:
                 raise GraphQLError("You are not a professor")
 
-            return professor
+        cache.set(cache_key, professor, timeout=60 * 15)  # Cache for 15 minutes
+        return professor
 
     @staticmethod
     @staff_member_required
@@ -507,6 +515,11 @@ class Query(graphene.ObjectType):
     @staticmethod
     @login_required
     def resolve_students(root, info, filters=None):
+        cache_key = f"graphql:{info.operation.name}:{filters}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
         sender = info.context.user
         if staff_or_assistant(sender):
             try:
@@ -515,11 +528,18 @@ class Query(graphene.ObjectType):
                 filters['major__faculty'] = sender.assistant.faculty.id
             except ObjectDoesNotExist:
                 pass
-            return resolve_model_with_filters(Student, filters)
+        result = resolve_model_with_filters(Student, filters)
+        cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+        return result
 
     @staticmethod
     @login_required
     def resolve_professors(root, info, filters=None):
+        cache_key = f"graphql:{info.operation.name}:{filters}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
         sender = info.context.user
         if staff_or_assistant(sender):
             try:
@@ -528,12 +548,22 @@ class Query(graphene.ObjectType):
                 filters['major__faculty'] = sender.assistant.faculty.id
             except ObjectDoesNotExist:
                 pass
-            return resolve_model_with_filters(Professor, filters)
+
+        result = resolve_model_with_filters(Professor, filters)
+        cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+        return result
 
     @staticmethod
     @staff_member_required
     def resolve_assistants(root, info, filters=None):
-        return resolve_model_with_filters(Assistant, filters)
+        cache_key = f"graphql:{info.operation.name}:{filters}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
+        result = resolve_model_with_filters(Assistant, filters)
+        cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+        return result
 
     @staticmethod
     @login_required
@@ -544,6 +574,11 @@ class Query(graphene.ObjectType):
     @staticmethod
     @login_required
     def resolve_student_passed_courses(self, info, pk=None):
+        cache_key = f"graphql:{info.operation.name}:{pk}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
         sender = info.context.user
         if staff_or_assistant(sender):
             user = get_object_or_404(User, pk=pk)
@@ -551,18 +586,24 @@ class Query(graphene.ObjectType):
             try:
                 faculty = sender.assistant.faculty
                 if student.major.faculty == faculty:
-                    return student.get_passed_courses()
+                    result = student.get_passed_courses()
+                    cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+                    return result
                 else:
                     raise GraphQLError("This student is not in your faculty")
             except ObjectDoesNotExist:
                 pass
-            return student.get_passed_courses()
+            result = student.get_passed_courses()
+            cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+            return result
         elif pk is not None:
             student = get_object_or_404(Student, pk=pk)
 
             try:
                 if sender.professor == student.advisor:
-                    return student.get_passed_courses()
+                    result = student.get_passed_courses()
+                    cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+                    return result
                 else:
                     raise GraphQLError("You are not the advisor of this student")
             except ObjectDoesNotExist:
@@ -570,13 +611,21 @@ class Query(graphene.ObjectType):
         else:
             try:
                 student = sender.student
-                return student.get_passed_courses()
+                result = student.get_passed_courses()
+                cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+                return result
+
             except ObjectDoesNotExist:
                 raise GraphQLError("You are not a student")
 
     @staticmethod
     @login_required
     def resolve_student_current_semester_courses(self, info, pk=None):
+        cache_key = f"graphql:{info.operation.name}:{pk}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
         sender = info.context.user
         if staff_or_assistant(sender):
             user = get_object_or_404(User, pk=pk)
@@ -584,18 +633,26 @@ class Query(graphene.ObjectType):
             try:
                 faculty = sender.assistant.faculty
                 if student.major.faculty == faculty:
-                    return student.get_current_semester_courses()
+                    result = student.get_current_semester_courses()
+                    cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+                    return result
                 else:
                     raise GraphQLError("This student is not in your faculty")
             except ObjectDoesNotExist:
                 pass
-            return student.get_current_semester_courses()
+            result = student.get_current_semester_courses()
+            cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+            return result
+
         elif pk is not None:
             student = get_object_or_404(Student, pk=pk)
 
             try:
                 if sender.professor == student.advisor:
-                    return student.get_current_semester_courses()
+                    result = student.get_current_semester_courses()
+                    cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+                    return result
+
                 else:
                     raise GraphQLError("You are not the advisor of this student")
             except ObjectDoesNotExist:
@@ -603,32 +660,46 @@ class Query(graphene.ObjectType):
         else:
             try:
                 student = sender.student
-                return student.get_current_semester_courses()
+                result = student.get_current_semester_courses()
+                cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+                return result
+
             except ObjectDoesNotExist:
                 raise GraphQLError("You are not a student")
 
     @staticmethod
     @login_required
     def resolve_student_remaining_semesters(self, info, pk=None):
+        cache_key = f"graphql:{info.operation.name}:{pk}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
         sender = info.context.user
         if staff_or_assistant(sender):
             student = get_object_or_404(Student, pk=pk)
             try:
                 faculty = sender.assistant.faculty
                 if student.major.faculty == faculty:
-                    return student.get_academic_semester_count()
+                    result = student.get_academic_semester_count()
+                    cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+                    return result
                 else:
                     raise GraphQLError("This student is not in your faculty")
             except ObjectDoesNotExist:
                 pass
-            return student.get_academic_semester_count()
+            result = student.get_academic_semester_count()
+            cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+            return result
         else:
             try:
                 student = sender.student
             except ObjectDoesNotExist:
                 raise GraphQLError("You are not a student")
 
-            return student.get_academic_semester_count()
+            result = student.get_academic_semester_count()
+            cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+            return result
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
