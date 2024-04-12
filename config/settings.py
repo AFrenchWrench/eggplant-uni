@@ -136,3 +136,14 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'unieggplant@gmail.com'
 EMAIL_HOST_PASSWORD = 'kzvwhimpnnsxfmlx'
 DEFAULT_FROM_EMAIL = 'Celery Testing | EggplantUni'
+
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://redis:6379/2",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
