@@ -1,6 +1,6 @@
 import os
 
-from celery import Celery, shared_task
+from celery import Celery
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
