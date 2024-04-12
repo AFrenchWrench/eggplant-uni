@@ -19,7 +19,3 @@ def send_email(to, subject, text):
         return True
     except Exception as e:
         raise GraphQLError(str(e))
-
-
-    # save token to redis and set expiration time 24 hours
-

@@ -3,7 +3,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from graphene_django.types import DjangoObjectType
-from graphene_file_upload.scalars import Upload
 from graphql import GraphQLError
 
 from university.models import (
@@ -136,7 +135,6 @@ class CreateSemesterWithdrawalRequestInput(graphene.InputObjectType):
 
 
 class CreateDefermentRequestInput(graphene.InputObjectType):
-    file = Upload(required=True)
     semester = graphene.ID(required=True)
     faculty = graphene.ID(required=True)
 
@@ -328,7 +326,6 @@ class UpdateSemesterWithdrawalRequestInput(graphene.InputObjectType):
 
 class UpdateDefermentRequestInput(graphene.InputObjectType):
     student = graphene.ID()
-    file = Upload()
     semester = graphene.ID()
     faculty = graphene.ID()
     status = graphene.String()

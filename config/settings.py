@@ -16,7 +16,6 @@ ALLOWED_HOSTS = ['*']
 INSTALLED_APPS = [
     # Third Parties
     'graphene_django',
-    'graphene_file_upload',
     # Default Apps
     'django.contrib.admin',
     'django.contrib.auth',

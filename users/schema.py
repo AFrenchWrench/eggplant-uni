@@ -9,7 +9,6 @@ from django.shortcuts import get_object_or_404
 from django.utils.crypto import get_random_string
 from django.utils.http import urlsafe_base64_decode
 from graphene_django import DjangoObjectType
-from graphene_file_upload.scalars import Upload
 from graphql import (
     GraphQLError,
 )
@@ -78,7 +77,6 @@ class CreateUserInput(graphene.InputObjectType):
     national_id = graphene.String(required=True)
     gender = graphene.String(required=True)
     birth_date = graphene.Date(required=True)
-    # image = Upload(required=True)
     user_code = graphene.String(required=True)
 
 
@@ -180,7 +178,6 @@ class UpdateUserInput(graphene.InputObjectType):
     national_id = graphene.String()
     gender = graphene.String()
     birth_date = graphene.Date()
-    image = Upload()
 
 
 class UpdateStudentInput(graphene.InputObjectType):
