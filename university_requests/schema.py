@@ -780,9 +780,6 @@ class Query(graphene.ObjectType):
     semester_withdrawal_request = graphene.Field(SemesterWithdrawalRequestType, pk=graphene.ID(required=True))
     deferment_request = graphene.Field(DefermentRequestType, pk=graphene.ID(required=True))
 
-    # TODO : if you were in the mood manage the access levels of these queries and mutations
-    #  if you weren't I'll do it in the morning
-
     @login_required
     def resolve_course_registration_requests(self, info, filters=None):
         cache_key = f"graphql:{info.operation.name}:{filters}"
@@ -805,10 +802,18 @@ class Query(graphene.ObjectType):
             filters['student'] = student.id
         elif professor is not None:
             filters['student__major__professors'] = professor
-        return resolve_model_with_filters(CourseRegistrationRequest, filters)
+
+        result = resolve_model_with_filters(CourseRegistrationRequest, filters)
+        cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+        return result
 
     @login_required
     def resolve_student_course_participants(self, info, filters=None):
+        cache_key = f"graphql:{info.operation.name}:{filters}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
         user = info.context.user
         try:
             student = user.student
@@ -824,10 +829,18 @@ class Query(graphene.ObjectType):
             filters['student'] = student.id
         elif professor is not None:
             filters['student__major__professors'] = professor
-        return resolve_model_with_filters(StudentCourseParticipant, filters)
+
+        result = resolve_model_with_filters(StudentCourseParticipant, filters)
+        cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+        return result
 
     @login_required
     def resolve_course_correction_requests(self, info, filters=None):
+        cache_key = f"graphql:{info.operation.name}:{filters}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
         user = info.context.user
         try:
             student = user.student
@@ -843,10 +856,18 @@ class Query(graphene.ObjectType):
             filters['student'] = student.id
         elif professor is not None:
             filters['student__major__professors'] = professor
-        return resolve_model_with_filters(CourseCorrectionRequest, filters)
+
+        result = resolve_model_with_filters(CourseCorrectionRequest, filters)
+        cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+        return result
 
     @login_required
     def resolve_reconsideration_requests(self, info, filters=None):
+        cache_key = f"graphql:{info.operation.name}:{filters}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
         user = info.context.user
         try:
             student = user.student
@@ -862,7 +883,10 @@ class Query(graphene.ObjectType):
             filters['student'] = student.id
         elif professor is not None:
             filters['student__major__professors'] = professor
-        return resolve_model_with_filters(ReconsiderationRequest, filters)
+
+        result = resolve_model_with_filters(ReconsiderationRequest, filters)
+        cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+        return result
 
     @login_required
     def resolve_emergency_withdrawal_requests(self, info, filters=None):
@@ -888,6 +912,11 @@ class Query(graphene.ObjectType):
 
     @login_required
     def resolve_semester_withdrawal_requests(self, info, filters=None):
+        cache_key = f"graphql:{info.operation.name}:{filters}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
         user = info.context.user
         try:
             student = user.student
@@ -903,10 +932,18 @@ class Query(graphene.ObjectType):
             filters['student'] = student.id
         elif professor is not None:
             filters['student__major__professors'] = professor
-        return resolve_model_with_filters(SemesterWithdrawalRequest, filters)
+
+        result = resolve_model_with_filters(SemesterWithdrawalRequest, filters)
+        cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+        return result
 
     @login_required
     def resolve_deferment_requests(self, info, filters=None):
+        cache_key = f"graphql:{info.operation.name}:{filters}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
         user = info.context.user
         try:
             student = user.student
@@ -922,11 +959,19 @@ class Query(graphene.ObjectType):
             filters['student'] = student.id
         elif professor is not None:
             filters['student__major__professors'] = professor
-        return resolve_model_with_filters(DefermentRequest, filters)
+
+        result = resolve_model_with_filters(DefermentRequest, filters)
+        cache.set(cache_key, result, timeout=60 * 15)  # Cache for 15 minutes
+        return result
 
     @staticmethod
     @login_required
     def resolve_course_registration_request(self, info, pk):
+        cache_key = f"graphql:{info.operation.name}:{pk}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
         request = get_object_or_404(CourseRegistrationRequest, pk=pk)
 
         user = info.context.user
@@ -946,11 +991,17 @@ class Query(graphene.ObjectType):
             if professor not in request.student.major.professors:
                 raise GraphQLError('You are not this students professor')
 
+        cache.set(cache_key, request, timeout=60 * 15)  # Cache for 15 minutes
         return request
 
     @staticmethod
     @login_required
     def resolve_student_course_participant(self, info, pk):
+        cache_key = f"graphql:{info.operation.name}:{pk}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
         request = get_object_or_404(StudentCourseParticipant, pk=pk)
         user = info.context.user
         try:
@@ -969,11 +1020,17 @@ class Query(graphene.ObjectType):
             if professor not in request.student.major.professors:
                 raise GraphQLError('You are not this students professor')
 
+        cache.set(cache_key, request, timeout=60 * 15)  # Cache for 15 minutes
         return request
 
     @staticmethod
     @login_required
     def resolve_course_correction_request(self, info, pk):
+        cache_key = f"graphql:{info.operation.name}:{pk}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
         request = get_object_or_404(CourseCorrectionRequest, pk=pk)
 
         user = info.context.user
@@ -993,11 +1050,17 @@ class Query(graphene.ObjectType):
             if professor not in request.student.major.professors:
                 raise GraphQLError('You are not this students professor')
 
+        cache.set(cache_key, request, timeout=60 * 15)  # Cache for 15 minutes
         return request
 
     @staticmethod
     @login_required
     def resolve_reconsideration_request(self, info, pk):
+        cache_key = f"graphql:{info.operation.name}:{pk}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
         request = get_object_or_404(ReconsiderationRequest, pk=pk)
         user = info.context.user
         try:
@@ -1016,6 +1079,7 @@ class Query(graphene.ObjectType):
             if professor not in request.student.major.professors:
                 raise GraphQLError('You are not this students professor')
 
+        cache.set(cache_key, request, timeout=60 * 15)  # Cache for 15 minutes
         return request
 
     @staticmethod
@@ -1055,6 +1119,11 @@ class Query(graphene.ObjectType):
     @staticmethod
     @login_required
     def resolve_semester_withdrawal_request(self, info, pk):
+        cache_key = f"graphql:{info.operation.name}:{pk}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
         request = get_object_or_404(SemesterWithdrawalRequest, pk=pk)
         user = info.context.user
         try:
@@ -1072,11 +1141,18 @@ class Query(graphene.ObjectType):
         elif professor is not None:
             if professor not in request.student.major.professors:
                 raise GraphQLError('You are not this students professor')
+
+        cache.set(cache_key, request, timeout=60 * 15)  # Cache for 15 minutes
         return request
 
     @staticmethod
     @login_required
     def resolve_deferment_request(self, info, pk):
+        cache_key = f"graphql:{info.operation.name}:{pk}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
         user = info.context.user
         request = get_object_or_404(DefermentRequest, pk=pk)
         try:
@@ -1094,6 +1170,8 @@ class Query(graphene.ObjectType):
         elif professor is not None:
             if professor not in request.student.major.professors:
                 raise GraphQLError('You are not this students professor')
+
+        cache.set(cache_key, request, timeout=60 * 15)  # Cache for 15 minutes
         return request
 
 
