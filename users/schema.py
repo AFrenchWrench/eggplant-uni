@@ -371,25 +371,28 @@ class ResetPassword(graphene.Mutation):
     success = graphene.Boolean()
 
     class Arguments:
-        token = graphene.String(required=True)
+        tk = graphene.String(required=True)
         email = graphene.String(required=True)
         new_password = graphene.String(required=True)
 
     @staticmethod
-    def mutate(root, info, token, email, new_password):
+    def mutate(root, info, tk, email, new_password):
+
+
         r = Redis(host='localhost', port=6379, db=0)
-        stored_email = r.get(token)
+
+        stored_email = r.get(tk)
+
+        print(stored_email)
         if not stored_email or stored_email.decode('utf-8') != email:
             raise GraphQLError("Invalid token or email")
-
-        uid = urlsafe_base64_decode(token).decode('utf-8')
-
-        user = get_object_or_404(User, pk=uid)
+        stored_email = stored_email.decode('utf-8')
+        user = get_object_or_404(User, email=stored_email)
 
         user.set_password(new_password)
         user.save()
 
-        r.delete(token)
+        r.delete(tk)
 
         return ResetPassword(success=True)
 
