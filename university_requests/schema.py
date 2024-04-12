@@ -153,6 +153,8 @@ class CreateCourseRegistrationRequest(graphene.Mutation):
         semester = [semester for semester in Semester.objects.all() if semester.is_active()][0]
         if semester.course_selection_end_time < timezone.now():
             raise GraphQLError("The Course Selection Time is Over")
+        elif semester.course_selection_start_time > timezone.now():
+            raise GraphQLError("The Course Selection hasn't been Started")
         try:
             user = info.context.user
             student = get_object_or_404(Student, pk=user.student.id)
@@ -195,15 +197,29 @@ class CreateCourseCorrectionRequest(graphene.Mutation):
     def mutate(self, info, input):
         semester = [semester for semester in Semester.objects.all() if semester.is_active()][0]
         if semester.course_addition_drop_end < timezone.now():
-            raise GraphQLError("The Course addition/drop Time is Over")
+            raise GraphQLError("The Course Addition/Drop Time is Over")
+        elif semester.course_addition_drop_start > timezone.now():
+            raise GraphQLError("The Course Addition/Drop Time hasn't been Started")
         try:
             student = info.context.user.student
             dropped_courses = [get_object_or_404(SemesterCourse, pk=course_id) for course_id in
                                input['dropped_courses']]
             added_courses = [get_object_or_404(SemesterCourse, pk=course_id) for course_id in input['added_courses']]
 
-            # TODO: Check It's Correct Or Not Please
-            check_student_courses_conditions(student, added_courses)
+            # Get All Current Courses of Student
+            student_semester_courses = student.get_current_semester_courses()
+            updated_semester_courses = student_semester_courses
+
+            # Remove Unwanted Courses
+            for drop in dropped_courses:
+                updated_semester_courses.remove(drop)
+
+            # Add Wanted Courses
+            for add in added_courses:
+                updated_semester_courses.append(add)
+
+            # Check Updated Semester Courses
+            check_student_courses_conditions(student, updated_semester_courses)
 
             course_correction_request = CourseCorrectionRequest.objects.create(student=student)
             course_correction_request.dropped_courses.set(dropped_courses)
@@ -349,6 +365,7 @@ class UpdateCourseRegistrationRequest(graphene.Mutation):
                 value = get_object_or_404(Student, pk=value)
             elif field == 'courses':
                 value = [get_object_or_404(SemesterCourse, pk=pk) for pk in value]
+                check_student_courses_conditions(course_registration_request.student, value)
             setattr(course_registration_request, field, value)
         course_registration_request.save()
         return UpdateCourseRegistrationRequest(course_registration_request=course_registration_request)
@@ -389,7 +406,23 @@ class UpdateCourseCorrectionRequest(graphene.Mutation):
                 value = get_object_or_404(Student, pk=value)
             elif field in ['dropped_courses', 'added_courses']:
                 value = [get_object_or_404(SemesterCourse, pk=pk) for pk in value]
+                # Get All Current Courses of Student
+                student_semester_courses = course_correction_request.student.get_current_semester_courses()
+                updated_semester_courses = student_semester_courses
+                if field == 'dropped_courses':
+                    # Remove Unwanted Courses
+                    for drop in value:
+                        updated_semester_courses.remove(drop)
+                elif field == 'added_courses':
+                    # Add Wanted Courses
+                    for add in value:
+                        updated_semester_courses.append(add)
+
+                # Check Updated Semester Courses
+                check_student_courses_conditions(course_correction_request.student, updated_semester_courses)
+
             setattr(course_correction_request, field, value)
+
         course_correction_request.save()
         return UpdateCourseCorrectionRequest(course_correction_request=course_correction_request)
 
