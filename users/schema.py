@@ -355,7 +355,7 @@ class ResetPasswordRequest(graphene.Mutation):
         token = get_random_string(length=32)
 
         text = f"""
-        Hi {user.get_full_name} ... \n Your token is {token}
+        Hi {user.get_full_name()} ... \n Your token is {token}
                """
         send = send_email(email, subject, text)
         r = Redis(host='localhost', port=6379, db=0)
@@ -374,24 +374,26 @@ class ResetPassword(graphene.Mutation):
 
     @staticmethod
     def mutate(root, info, tk, email, new_password):
-
-
         r = Redis(host='localhost', port=6379, db=0)
-
         stored_email = r.get(tk)
 
         print(stored_email)
         if not stored_email or stored_email.decode('utf-8') != email:
             raise GraphQLError("Invalid token or email")
-        stored_email = stored_email.decode('utf-8')
-        user = get_object_or_404(User, email=stored_email)
+        user = get_object_or_404(User, email=email)
 
-        user.set_password(new_password)
-        user.save()
+        form = UserForm(password=new_password)
+        if form.is_valid():
+            user.set_password(new_password)
+            user.save()
 
-        r.delete(tk)
+            r.delete(tk)
 
-        return ResetPassword(success=True)
+            return ResetPassword(success=True)
+        else:
+            errors = form.errors.as_data()
+            error_messages = [error[0].messages[0] for error in errors.values()]
+            raise GraphQLError(', '.join(error_messages))
 
 
 class Mutation(graphene.ObjectType):
