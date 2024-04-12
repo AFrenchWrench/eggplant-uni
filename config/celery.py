@@ -2,7 +2,12 @@ import os
 
 from celery import Celery
 
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+#os.environ.setdefault('CELERY_BROKER_URL', 'redis://127.0.0.1:6379/')
+#os.environ.setdefault('CELERY_RESULT_BACKEND', 'redis://127.0.0.1:6379/')
+
+
 
 app = Celery('config')
 
