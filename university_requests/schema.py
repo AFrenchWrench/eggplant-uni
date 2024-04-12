@@ -1,6 +1,5 @@
 import graphene
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from graphene_django.types import DjangoObjectType
@@ -26,6 +25,51 @@ from .models import (
     SemesterWithdrawalRequest,
     DefermentRequest,
 )
+
+
+def check_student_courses_conditions(student, semester_courses):
+    # Prerequisites Check
+    if not all(map(student.check_course_passed_or_failed,
+                   [prerequisite for semester_course in
+                    semester_courses for prerequisite in semester_course.course.get_all_prerequisites()])):
+        raise GraphQLError("At Least One of the Prerequisites Not Passed")
+
+    # Duplicate Semester Course Check
+    if len(semester_courses) != len(set(semester_courses)):
+        raise GraphQLError("Duplicate Course Found!")
+
+    # Passed Course Check
+    for semester_course in semester_courses:
+        if semester_course in student.get_passed_courses:
+            raise GraphQLError("You Passed At Least One of the Course")
+
+    # Semester Course Capacity Check (Without Redis)
+    if not all([semester_course.get_capacity_count() for semester_course in semester_courses]):
+        raise GraphQLError("At Least Capacity of One of the Courses is Zero ")
+
+    # Units Count Check
+    if sum([semester_course.course_units() for semester_course in
+            semester_courses]) >= student.get_max_courses_unit():
+        raise GraphQLError("Courses Units Count is Bigger than Max Allowed Units")
+
+    # Classes Overlap Times Check
+    classes_times = [semester_course.day_and_time for semester_course in semester_courses]
+    if len(classes_times) != len(set(classes_times)):
+        raise GraphQLError("Classes Times Overlap Each Other")
+
+    # Classes Overlap Exam Times Check
+    classes_exam_times = [semester_course.exam_datetime for semester_course in semester_courses]
+    if len(classes_exam_times) != len(set(classes_exam_times)):
+        raise GraphQLError("Classes Exam Times Overlap Each Other")
+
+    # Have Semester Count Check
+    if not student.have_semester_count():
+        raise GraphQLError("Student Courses Count Reached Out of Limit")
+
+    # Related Semester Courses Check
+    if not all(map(lambda x: x == student.major.id,
+                   [semester_course.course.major.id for semester_course in semester_courses])):
+        raise GraphQLError("You Choose At Least One of The Non Related Courses For Your Major")
 
 
 class CourseRegistrationRequestType(DjangoObjectType):
@@ -109,54 +153,15 @@ class CreateCourseRegistrationRequest(graphene.Mutation):
         semester = [semester for semester in Semester.objects.all() if semester.is_active()][0]
         if semester.course_selection_end_time < timezone.now():
             raise GraphQLError("The Course Selection Time is Over")
-        elif semester.course_selection_start_time > timezone.now():
-            raise GraphQLError("The Course Selection hasn't been Started")
         try:
             user = info.context.user
-            student = user.student
+            student = get_object_or_404(Student, pk=user.student.id)
             semester_courses = [get_object_or_404(SemesterCourse, pk=course_id) for course_id in input['courses']]
-            # TODO : create a form to validate the selected courses based on document
-            # درس ͖یشنیاز حتما باید در وضعیت قبول باشد -- Done
-            # درس تکراری یا پاس شده نمیتوان برداشت -- Done
-            # درس تکمیل را نمیتوان اخذ کرد -- Done
-            # درس همنیاز را نمیتوان زودتر از درسی که همنیاز آن شده حذف کرد -- HELP!!
-            # در صورت معدل ترم ͖یش بالای  ۱۷دانشجو حق دارد  ۲۴واحد اخذ کند و در غیر این صورت  ۲۰واحد در یک -- Done
-            # انتخاب واحد می تواند اخذ کند -- Done
-            # تداخل زمانی در امتحان و کلاس نباید وجود داشته باشد
-            # دانشجو در صورت داشتن سنوات میتواند انتخاب واحد کند
-            # تنها دروس مرتبط به رشته را میتوان برداشت
-            # و هر خطایی که بنظر شما منطقی میباشد باید ͖یادهسازی شود
 
-            # Prerequisites Check
-            # if not all(map(student.check_course_passed_or_failed,
-            #                [prerequisite for semester_course in
-            #                 semester_courses for prerequisite in semester_course.course.get_all_prerequisites()])):
-            #     raise GraphQLError("At Least One of the Prerequisites Not Passed")
+            check_student_courses_conditions(student, semester_courses)
+            course_registration_request = CourseRegistrationRequest.objects.create(student=student,
+                                                                                   courses=semester_courses)
 
-            pp = [p.check_all_prerequisites() for p in semester_courses]
-
-            # Duplicate Semester Course Check
-            #     if len(semester_courses) != len(set(semester_courses)):
-            #         raise GraphQLError("Duplicate Course Found!")
-            #
-            #     # Passed Course Check
-            #     for semester_course in semester_courses:
-            #         if semester_course in student.get_passed_courses:
-            #             raise GraphQLError("You Passed At Least One of the Course")
-            #
-            #     # Semester Course Capacity Check (Without Redis)
-            #     if not all([semester_course.get_capacity_count() for semester_course in semester_courses]):
-            #         raise GraphQLError("At Least Capacity of One of the Courses is Zero ")
-            #
-            #     # Units Count Check
-            #     if sum([semester_course.course_units() for semester_course in
-            #             semester_courses]) >= student.get_max_courses_unit():
-            #         raise GraphQLError("Courses Units Count is Bigger than Max Allowed Units")
-            #
-            #     #
-            #     course_registration_request = CourseRegistrationRequest.objects.create(student=student,
-            #                                                                            courses=semester_courses)
-            #
             return CreateCourseRegistrationRequest(course_registration_request=course_registration_request)
         except Student.DoesNotExist:
             raise GraphQLError("You have to be a Student to create this request")
@@ -192,13 +197,13 @@ class CreateCourseCorrectionRequest(graphene.Mutation):
         if semester.course_addition_drop_end < timezone.now():
             raise GraphQLError("The Course addition/drop Time is Over")
         try:
-            user = info.context.user
-            student = user.student
+            student = info.context.user.student
             dropped_courses = [get_object_or_404(SemesterCourse, pk=course_id) for course_id in
                                input['dropped_courses']]
             added_courses = [get_object_or_404(SemesterCourse, pk=course_id) for course_id in input['added_courses']]
 
-            # TODO: add same logic as course registration here
+            # TODO: Check It's Correct Or Not Please
+            check_student_courses_conditions(student, added_courses)
 
             course_correction_request = CourseCorrectionRequest.objects.create(student=student)
             course_correction_request.dropped_courses.set(dropped_courses)
