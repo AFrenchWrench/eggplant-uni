@@ -13,7 +13,7 @@ from university.models import (
 from users.models import Student, Professor
 from utils.schema_utils import (
     resolve_model_with_filters,
-    login_required, staff_or_assistant,
+    login_required, staff_or_assistant, staff_or_same_faculty_assistant,
 )
 from utils.tasks import send_email
 from .models import (
@@ -154,7 +154,7 @@ class CreateCourseRegistrationRequest(graphene.Mutation):
             raise GraphQLError("The Course Selection hasn't been Started")
         try:
             user = info.context.user
-            student = get_object_or_404(Student, pk=user.student.id)
+            student = user.students
             semester_courses = [get_object_or_404(SemesterCourse, pk=course_id) for course_id in input['courses']]
 
             check_student_courses_conditions(student, semester_courses)
@@ -301,7 +301,6 @@ class CreateDefermentRequest(graphene.Mutation):
 
 
 class UpdateCourseRegistrationRequestInput(graphene.InputObjectType):
-    student = graphene.ID()
     courses = graphene.List(graphene.ID)
     status = graphene.String()
 
@@ -357,18 +356,44 @@ class UpdateCourseRegistrationRequest(graphene.Mutation):
     course_registration_request = graphene.Field(CourseRegistrationRequestType)
 
     @staticmethod
+    @login_required
     def mutate(root, info, pk, input):
         course_registration_request = get_object_or_404(CourseRegistrationRequest, pk=pk)
-        for field, value in input.items():
-            if field == 'student':
-                value = get_object_or_404(Student, pk=value)
-                course_registration_request.student = value
-            elif field == 'courses':
-                value = [get_object_or_404(SemesterCourse, pk=pk) for pk in value]
-                check_student_courses_conditions(course_registration_request.student, value)
-                course_registration_request.courses.set(value)
-        course_registration_request.save()
-        return UpdateCourseRegistrationRequest(course_registration_request=course_registration_request)
+        user = info.context.user
+        student = course_registration_request.student.user
+        if staff_or_same_faculty_assistant(user, course_registration_request.student.major.faculty):
+            if input.get('courses'):
+                raise GraphQLError("You can't alter courses")
+            for field, value in input.items():
+                setattr(course_registration_request, field, value)
+            course_registration_request.save()
+            subject = 'Emergency withdrawal request'
+            text = f'''
+                            Hi {student.get_full_name()}
+
+                            Your Request to register {[course.name for course in course_registration_request.courses.all()]}
+                            has been {course_registration_request.status}
+                        '''
+            send_email.delay(student.email, subject, text)
+            return UpdateCourseRegistrationRequest(course_registration_request=course_registration_request)
+        else:
+            try:
+                student = user.student
+            except ObjectDoesNotExist:
+                raise GraphQLError("You are not a Student")
+
+            if course_registration_request.student == student:
+                if input.get('status'):
+                    raise GraphQLError("You can't alter status")
+                for field, value in input.items():
+                    if field == 'courses':
+                        value = [get_object_or_404(SemesterCourse, pk=pk) for pk in value]
+                        check_student_courses_conditions(course_registration_request.student, value)
+                    setattr(course_registration_request, field, value)
+                course_registration_request.save()
+                return UpdateCourseRegistrationRequest(course_registration_request=course_registration_request)
+            else:
+                raise GraphQLError("This request is not yours")
 
 
 class UpdateStudentCourseParticipant(graphene.Mutation):
