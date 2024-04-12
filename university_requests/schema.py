@@ -33,14 +33,12 @@ def check_student_courses_conditions(student, semester_courses):
                    [prerequisite for semester_course in
                     semester_courses for prerequisite in semester_course.course.get_all_prerequisites()])):
         raise GraphQLError("At Least One of the Prerequisites Not Passed")
-
     # Duplicate Semester Course Check
     if len(semester_courses) != len(set(semester_courses)):
         raise GraphQLError("Duplicate Course Found!")
-
     # Passed Course Check
     for semester_course in semester_courses:
-        if semester_course in student.get_passed_courses:
+        if semester_course in student.get_passed_courses():
             raise GraphQLError("You Passed At Least One of the Course")
 
     # Semester Course Capacity Check (Without Redis)
@@ -161,9 +159,8 @@ class CreateCourseRegistrationRequest(graphene.Mutation):
             semester_courses = [get_object_or_404(SemesterCourse, pk=course_id) for course_id in input['courses']]
 
             check_student_courses_conditions(student, semester_courses)
-            course_registration_request = CourseRegistrationRequest.objects.create(student=student,
-                                                                                   courses=semester_courses)
-
+            course_registration_request = CourseRegistrationRequest.objects.create(student=student)
+            course_registration_request.courses.set(semester_courses)
             return CreateCourseRegistrationRequest(course_registration_request=course_registration_request)
         except Student.DoesNotExist:
             raise GraphQLError("You have to be a Student to create this request")
@@ -363,10 +360,11 @@ class UpdateCourseRegistrationRequest(graphene.Mutation):
         for field, value in input.items():
             if field == 'student':
                 value = get_object_or_404(Student, pk=value)
+                course_registration_request.student = value
             elif field == 'courses':
                 value = [get_object_or_404(SemesterCourse, pk=pk) for pk in value]
                 check_student_courses_conditions(course_registration_request.student, value)
-            setattr(course_registration_request, field, value)
+                course_registration_request.courses.set(value)
         course_registration_request.save()
         return UpdateCourseRegistrationRequest(course_registration_request=course_registration_request)
 
