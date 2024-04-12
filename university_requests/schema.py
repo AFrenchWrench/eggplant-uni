@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from graphene_django.types import DjangoObjectType
 from graphql import GraphQLError
+from datetime import timedelta
 
 from university.models import (
     SemesterCourse,
@@ -15,7 +16,7 @@ from utils.schema_utils import (
     resolve_model_with_filters,
     login_required, staff_or_assistant,
 )
-from utils.tasks import send_email
+from utils.tasks import send_email, send_course_approval_and_schedule_email
 from .models import (
     CourseRegistrationRequest,
     StudentCourseParticipant,
@@ -24,6 +25,7 @@ from .models import (
     EmergencyWithdrawalRequest,
     SemesterWithdrawalRequest,
     DefermentRequest,
+
 )
 
 
@@ -142,11 +144,12 @@ class CreateCourseRegistrationRequest(graphene.Mutation):
     class Arguments:
         input = CreateCourseRegistrationRequestInput(required=True)
 
+
     course_registration_request = graphene.Field(CourseRegistrationRequestType)
 
     @staticmethod
     @login_required
-    def mutate(self, info, input):
+    def mutate(self, info, form_data):
         semester = [semester for semester in Semester.objects.all() if semester.is_active()][0]
         if semester.course_selection_end_time < timezone.now():
             raise GraphQLError("The Course Selection Time is Over")
@@ -155,11 +158,23 @@ class CreateCourseRegistrationRequest(graphene.Mutation):
         try:
             user = info.context.user
             student = get_object_or_404(Student, pk=user.student.id)
-            semester_courses = [get_object_or_404(SemesterCourse, pk=course_id) for course_id in input['courses']]
+            semester_courses = [get_object_or_404(SemesterCourse, pk=course_id) for course_id in form_data['courses']]
 
             check_student_courses_conditions(student, semester_courses)
             course_registration_request = CourseRegistrationRequest.objects.create(student=student)
             course_registration_request.courses.set(semester_courses)
+
+            # Example: Fetch weekly schedule from database
+            weekly_schedule = ', '.join([course.day_and_time for course in student.get_current_semester_courses()])  # Assuming weekly schedule is stored in Student model
+
+            # Send email to student
+            course_names = ', '.join([course.name for course in student.get_current_semester_courses()])
+            send_course_approval_and_schedule_email.apply_async(
+                args=[info.context.user.email, course_names, weekly_schedule],
+                countdown=(semester.course_selection_end_time - timezone.now() - timedelta(minutes=30)).total_seconds()
+                # Send email 30 minutes before course selection end time
+            )
+
             return CreateCourseRegistrationRequest(course_registration_request=course_registration_request)
         except Student.DoesNotExist:
             raise GraphQLError("You have to be a Student to create this request")
