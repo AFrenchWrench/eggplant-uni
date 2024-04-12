@@ -13,7 +13,10 @@ from university.models import (
 from users.models import Student, Professor
 from utils.schema_utils import (
     resolve_model_with_filters,
-    login_required, staff_or_assistant, staff_or_same_faculty_assistant,
+    login_required,
+    staff_member_required,
+    staff_or_assistant,
+    staff_or_same_faculty_assistant,
 )
 from utils.tasks import send_email
 from .models import (
@@ -172,14 +175,17 @@ class CreateStudentCourseParticipant(graphene.Mutation):
     student_course_participant = graphene.Field(StudentCourseParticipantType)
 
     @staticmethod
+    @login_required
     def mutate(self, info, input):
-        student = get_object_or_404(Student, pk=input['student'])
         course = get_object_or_404(SemesterCourse, pk=input['course'])
+        try:
+            student = info.context.user.student
+            student_course_participant = StudentCourseParticipant.objects.create(student=student,
+                                                                                 course=course)
 
-        student_course_participant = StudentCourseParticipant.objects.create(student=student,
-                                                                             course=course)
-
-        return CreateStudentCourseParticipant(student_course_participant=student_course_participant)
+            return CreateStudentCourseParticipant(student_course_participant=student_course_participant)
+        except Student.DoesNotExist:
+            raise GraphQLError("You have to be a Student to create this request")
 
 
 class CreateCourseCorrectionRequest(graphene.Mutation):
@@ -233,14 +239,17 @@ class CreateReconsiderationRequest(graphene.Mutation):
     reconsideration_request = graphene.Field(ReconsiderationRequestType)
 
     @staticmethod
+    @login_required
     def mutate(self, info, input):
-        student = get_object_or_404(Student, pk=input['student'])
         course = get_object_or_404(SemesterCourse, pk=input['course'])
+        try:
+            student = info.context.user.student
+            reconsideration_request = ReconsiderationRequest.objects.create(student=student, course=course,
+                                                                            text=input['text'])
 
-        reconsideration_request = ReconsiderationRequest.objects.create(student=student, course=course,
-                                                                        text=input['text'])
-
-        return CreateReconsiderationRequest(reconsideration_request=reconsideration_request)
+            return CreateReconsiderationRequest(reconsideration_request=reconsideration_request)
+        except Student.DoesNotExist:
+            raise GraphQLError("You have to be a Student to create this request")
 
 
 class CreateEmergencyWithdrawalRequest(graphene.Mutation):
@@ -257,8 +266,8 @@ class CreateEmergencyWithdrawalRequest(graphene.Mutation):
 
         try:
             student = user.student
-        except ObjectDoesNotExist:
-            raise GraphQLError("You are not a Student")
+        except Student.DoesNotExist:
+            raise GraphQLError("You have to be a Student to create this request")
 
         emergency_withdrawal_request = EmergencyWithdrawalRequest.objects.create(student=student, course=course,
                                                                                  text=input['text'])
@@ -272,14 +281,18 @@ class CreateSemesterWithdrawalRequest(graphene.Mutation):
     semester_withdrawal_request = graphene.Field(SemesterWithdrawalRequestType)
 
     @staticmethod
+    @login_required
     def mutate(self, info, input):
-        student = get_object_or_404(Student, pk=input['student'])
         semester = get_object_or_404(Semester, pk=input['semester'])
+        try:
+            student = info.context.user.student
 
-        semester_withdrawal_request = SemesterWithdrawalRequest.objects.create(student=student, semester=semester,
-                                                                               text=input['text'])
+            semester_withdrawal_request = SemesterWithdrawalRequest.objects.create(student=student, semester=semester,
+                                                                                   text=input['text'])
 
-        return CreateSemesterWithdrawalRequest(semester_withdrawal_request=semester_withdrawal_request)
+            return CreateSemesterWithdrawalRequest(semester_withdrawal_request=semester_withdrawal_request)
+        except Student.DoesNotExist:
+            raise GraphQLError("You have to be a Student to create this request")
 
 
 class CreateDefermentRequest(graphene.Mutation):
@@ -290,14 +303,17 @@ class CreateDefermentRequest(graphene.Mutation):
 
     @staticmethod
     def mutate(self, info, input):
-        student = get_object_or_404(Student, pk=input['student'])
         semester = get_object_or_404(Semester, pk=input['semester'])
         faculty = get_object_or_404(Faculty, pk=input['faculty'])
+        try:
+            student = info.context.user.student
 
-        deferment_request = DefermentRequest.objects.create(student=student, semester=semester, faculty=faculty,
-                                                            file=input['file'])
+            deferment_request = DefermentRequest.objects.create(student=student, semester=semester, faculty=faculty,
+                                                                file=input['file'])
 
-        return CreateDefermentRequest(deferment_request=deferment_request)
+            return CreateDefermentRequest(deferment_request=deferment_request)
+        except Student.DoesNotExist:
+            raise GraphQLError("You have to be a Student to create this request")
 
 
 class UpdateCourseRegistrationRequestInput(graphene.InputObjectType):
@@ -577,6 +593,7 @@ class DeleteCourseRegistrationRequest(graphene.Mutation):
     success = graphene.Boolean()
 
     @staticmethod
+    @staff_member_required
     def mutate(root, info, id):
         course_registration_request = get_object_or_404(CourseRegistrationRequest, pk=id)
         course_registration_request.delete()
@@ -590,6 +607,7 @@ class DeleteStudentCourseParticipant(graphene.Mutation):
     success = graphene.Boolean()
 
     @staticmethod
+    @staff_member_required
     def mutate(root, info, id):
         student_course_participant = get_object_or_404(StudentCourseParticipant, pk=id)
         student_course_participant.delete()
@@ -603,6 +621,7 @@ class DeleteCourseCorrectionRequest(graphene.Mutation):
     success = graphene.Boolean()
 
     @staticmethod
+    @staff_member_required
     def mutate(root, info, id):
         course_correction_request = get_object_or_404(CourseCorrectionRequest, pk=id)
         course_correction_request.delete()
@@ -616,6 +635,7 @@ class DeleteReconsiderationRequest(graphene.Mutation):
     success = graphene.Boolean()
 
     @staticmethod
+    @staff_member_required
     def mutate(root, info, id):
         reconsideration_request = get_object_or_404(ReconsiderationRequest, pk=id)
         reconsideration_request.delete()
@@ -629,6 +649,7 @@ class DeleteEmergencyWithdrawalRequest(graphene.Mutation):
     success = graphene.Boolean()
 
     @staticmethod
+    @staff_member_required
     def mutate(root, info, id):
         emergency_withdrawal_request = get_object_or_404(EmergencyWithdrawalRequest, pk=id)
         emergency_withdrawal_request.delete()
@@ -642,6 +663,7 @@ class DeleteSemesterWithdrawalRequest(graphene.Mutation):
     success = graphene.Boolean()
 
     @staticmethod
+    @staff_member_required
     def mutate(root, info, id):
         semester_withdrawal_request = get_object_or_404(SemesterWithdrawalRequest, pk=id)
         semester_withdrawal_request.delete()
@@ -655,6 +677,7 @@ class DeleteDefermentRequest(graphene.Mutation):
     success = graphene.Boolean()
 
     @staticmethod
+    @staff_member_required
     def mutate(root, info, id):
         deferment_request = get_object_or_404(DefermentRequest, pk=id)
         deferment_request.delete()
@@ -775,19 +798,64 @@ class Query(graphene.ObjectType):
         if student is not None:
             filters['student'] = student.id
         elif professor is not None:
-            filters['student'] = professor
+            filters['student__major__professors'] = professor
         return resolve_model_with_filters(CourseRegistrationRequest, filters)
 
     @login_required
     def resolve_student_course_participants(self, info, filters=None):
+        user = info.context.user
+        try:
+            student = user.student
+        except Student.DoesNotExist:
+            student = None
+        try:
+            professor = user.professor
+        except Professor.DoesNotExist:
+            professor = None
+
+        filters = filters or {}
+        if student is not None:
+            filters['student'] = student.id
+        elif professor is not None:
+            filters['student__major__professors'] = professor
         return resolve_model_with_filters(StudentCourseParticipant, filters)
 
     @login_required
     def resolve_course_correction_requests(self, info, filters=None):
+        user = info.context.user
+        try:
+            student = user.student
+        except Student.DoesNotExist:
+            student = None
+        try:
+            professor = user.professor
+        except Professor.DoesNotExist:
+            professor = None
+
+        filters = filters or {}
+        if student is not None:
+            filters['student'] = student.id
+        elif professor is not None:
+            filters['student__major__professors'] = professor
         return resolve_model_with_filters(CourseCorrectionRequest, filters)
 
     @login_required
     def resolve_reconsideration_requests(self, info, filters=None):
+        user = info.context.user
+        try:
+            student = user.student
+        except Student.DoesNotExist:
+            student = None
+        try:
+            professor = user.professor
+        except Professor.DoesNotExist:
+            professor = None
+
+        filters = filters or {}
+        if student is not None:
+            filters['student'] = student.id
+        elif professor is not None:
+            filters['student__major__professors'] = professor
         return resolve_model_with_filters(ReconsiderationRequest, filters)
 
     @login_required
@@ -805,31 +873,139 @@ class Query(graphene.ObjectType):
                 request = resolve_model_with_filters(EmergencyWithdrawalRequest, filters)
                 return request
         else:
-            raise GraphQLError("You are not access to this request!!")
+            raise GraphQLError("You Don't have access to this information")
 
     @login_required
     def resolve_semester_withdrawal_requests(self, info, filters=None):
+        user = info.context.user
+        try:
+            student = user.student
+        except Student.DoesNotExist:
+            student = None
+        try:
+            professor = user.professor
+        except Professor.DoesNotExist:
+            professor = None
+
+        filters = filters or {}
+        if student is not None:
+            filters['student'] = student.id
+        elif professor is not None:
+            filters['student__major__professors'] = professor
         return resolve_model_with_filters(SemesterWithdrawalRequest, filters)
 
     @login_required
     def resolve_deferment_requests(self, info, filters=None):
+        user = info.context.user
+        try:
+            student = user.student
+        except Student.DoesNotExist:
+            student = None
+        try:
+            professor = user.professor
+        except Professor.DoesNotExist:
+            professor = None
+
+        filters = filters or {}
+        if student is not None:
+            filters['student'] = student.id
+        elif professor is not None:
+            filters['student__major__professors'] = professor
         return resolve_model_with_filters(DefermentRequest, filters)
 
     @staticmethod
+    @login_required
     def resolve_course_registration_request(self, info, pk):
-        return get_object_or_404(CourseRegistrationRequest, pk=pk)
+        request = get_object_or_404(CourseRegistrationRequest, pk=pk)
+
+        user = info.context.user
+        try:
+            student = user.student
+        except Student.DoesNotExist:
+            student = None
+        try:
+            professor = user.professor
+        except Professor.DoesNotExist:
+            professor = None
+
+        if student is not None:
+            if request.student != student:
+                raise GraphQLError('This Request is not yours')
+        elif professor is not None:
+            if professor not in request.student.major.professors:
+                raise GraphQLError('You are not this students professor')
+
+        return request
 
     @staticmethod
+    @login_required
     def resolve_student_course_participant(self, info, pk):
-        return get_object_or_404(StudentCourseParticipant, pk=pk)
+        request = get_object_or_404(StudentCourseParticipant, pk=pk)
+        user = info.context.user
+        try:
+            student = user.student
+        except Student.DoesNotExist:
+            student = None
+        try:
+            professor = user.professor
+        except Professor.DoesNotExist:
+            professor = None
+
+        if student is not None:
+            if request.student != student:
+                raise GraphQLError('This Request is not yours')
+        elif professor is not None:
+            if professor not in request.student.major.professors:
+                raise GraphQLError('You are not this students professor')
+
+        return request
 
     @staticmethod
+    @login_required
     def resolve_course_correction_request(self, info, pk):
-        return get_object_or_404(CourseCorrectionRequest, pk=pk)
+        request = get_object_or_404(CourseCorrectionRequest, pk=pk)
+
+        user = info.context.user
+        try:
+            student = user.student
+        except Student.DoesNotExist:
+            student = None
+        try:
+            professor = user.professor
+        except Professor.DoesNotExist:
+            professor = None
+
+        if student is not None:
+            if request.student != student:
+                raise GraphQLError('This Request is not yours')
+        elif professor is not None:
+            if professor not in request.student.major.professors:
+                raise GraphQLError('You are not this students professor')
+
+        return request
 
     @staticmethod
+    @login_required
     def resolve_reconsideration_request(self, info, pk):
-        return get_object_or_404(ReconsiderationRequest, pk=pk)
+        request = get_object_or_404(ReconsiderationRequest, pk=pk)
+        user = info.context.user
+        try:
+            student = user.student
+        except Student.DoesNotExist:
+            student = None
+        try:
+            professor = user.professor
+        except Professor.DoesNotExist:
+            professor = None
+
+        if student is not None:
+            if request.student != student:
+                raise GraphQLError('This Request is not yours')
+        elif professor is not None:
+            if professor not in request.student.major.professors:
+                raise GraphQLError('You are not this students professor')
+
+        return request
 
     @staticmethod
     @login_required
@@ -858,12 +1034,48 @@ class Query(graphene.ObjectType):
                 raise GraphQLError("This request is not yours")
 
     @staticmethod
+    @login_required
     def resolve_semester_withdrawal_request(self, info, pk):
-        return get_object_or_404(SemesterWithdrawalRequest, pk=pk)
+        request = get_object_or_404(SemesterWithdrawalRequest, pk=pk)
+        user = info.context.user
+        try:
+            student = user.student
+        except Student.DoesNotExist:
+            student = None
+        try:
+            professor = user.professor
+        except Professor.DoesNotExist:
+            professor = None
+
+        if student is not None:
+            if request.student != student:
+                raise GraphQLError('This Request is not yours')
+        elif professor is not None:
+            if professor not in request.student.major.professors:
+                raise GraphQLError('You are not this students professor')
+        return request
 
     @staticmethod
+    @login_required
     def resolve_deferment_request(self, info, pk):
-        return get_object_or_404(DefermentRequest, pk=pk)
+        user = info.context.user
+        request = get_object_or_404(DefermentRequest, pk=pk)
+        try:
+            student = user.student
+        except Student.DoesNotExist:
+            student = None
+        try:
+            professor = user.professor
+        except Professor.DoesNotExist:
+            professor = None
+
+        if student is not None:
+            if request.student != student:
+                raise GraphQLError('This Request is not yours')
+        elif professor is not None:
+            if professor not in request.student.major.professors:
+                raise GraphQLError('You are not this students professor')
+        return request
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
