@@ -42,6 +42,9 @@ class Student(models.Model):
     def get_academic_semester_count(self):
         return self.semester_students.filter(is_active=True).count()
 
+    def have_semester_count(self):
+        return True if self.get_academic_semester_count() < 14 else True
+
     def get_passed_courses(self):
         return [course for course in self.courses.all() if course.is_passed()]
 
@@ -56,7 +59,7 @@ class Student(models.Model):
 
     def get_gpa_of_last_semester(self):
         return \
-            self.courses.filter(course__semester=self.semester_students.get(is_active=True).semester).aggregate(
+            self.courses.filter(course__semester=self.semester_students.filter(is_active=True).last().semester).aggregate(
                 average_grade=Avg('grade'))[
                 'average_grade']
 
@@ -83,7 +86,7 @@ class Professor(models.Model):
                                       "('A2', 'Associate Professor'), ('P', 'Professor')")
 
     def get_active_semester_courses(self):
-        return self.semester_courses.filter(semester=Semester.objects.get(is_active=True))
+        return self.semester_courses.filter(semester=Semester.objects.filter(is_active=True).last())
 
     def get_active_semester_students(self):
         return [student for semester_course in self.get_active_semester_courses() for student in
