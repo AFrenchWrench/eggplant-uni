@@ -16,10 +16,10 @@ RUN pip install --upgrade pip
 COPY ./requirements.txt .
 RUN pip install -r $APP_HOME/requirements.txt
 
-COPY ./entrypoint.sh $APP_HOME/entrypoint.sh
-RUN chmod +x $APP_HOME/entrypoint.sh
-RUN sed -i 's/\r$//' $APP_HOME/entrypoint.sh && chmod +x $APP_HOME/entrypoint.sh
-RUN dos2unix $APP_HOME/entrypoint.sh
+COPY ./entrypoint.sh .
+RUN chmod +x ./entrypoint.sh
+RUN sed -i 's/\r$//' ./entrypoint.sh && chmod +x $APP_HOME/entrypoint.sh
+RUN dos2unix ./entrypoint.sh
 
 COPY . $APP_HOME
 
